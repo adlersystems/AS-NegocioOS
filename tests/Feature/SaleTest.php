@@ -197,10 +197,13 @@ class SaleTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString(
-            'data-flash-success="'.__('app.flash.sale_registered').'"',
-            $html,
+        $encoded = json_encode(
+            __('app.flash.sale_registered'),
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT,
         );
+
+        $this->assertStringContainsString($encoded, $html);
+        $this->assertStringContainsString('data-toast-initial', $html);
     }
 
     public function test_store_requires_at_least_one_item(): void

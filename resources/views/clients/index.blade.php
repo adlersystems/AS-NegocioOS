@@ -36,8 +36,8 @@
                 @if ($search)
                     <x-button :href="route('clients.index')" variant="ghost" size="sm" icon="close">{{ __('app.actions.reset') }}</x-button>
                 @endif
-                <x-button :href="route('clients.export.pdf', $exportQuery)" variant="secondary" size="sm" icon="download" @click="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_pdf') }}</x-button>
-                <x-button :href="route('clients.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" @click="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
+                <x-button :href="route('clients.export.pdf', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_pdf') }}</x-button>
+                <x-button :href="route('clients.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
             </div>
         </div>
 

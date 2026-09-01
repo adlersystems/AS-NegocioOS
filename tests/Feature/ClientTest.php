@@ -199,10 +199,13 @@ class ClientTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString(
-            'data-flash-success="'.__('app.flash.updated', ['entity' => __('app.clients.singular')]).'"',
-            $html,
+        $encoded = json_encode(
+            __('app.flash.updated', ['entity' => __('app.clients.singular')]),
+            JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT,
         );
+
+        $this->assertStringContainsString($encoded, $html);
+        $this->assertStringContainsString('data-toast-initial', $html);
     }
 
     public function test_destroy_deletes_the_client(): void

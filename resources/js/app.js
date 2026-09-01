@@ -1,7 +1,7 @@
 import Alpine from 'alpinejs';
 import Chart from 'chart.js/auto';
 
-import toast from './toast';
+import './toast';
 import themeToggle from './theme';
 import languageSwitcher from './language';
 import dashboardCharts from './dashboard';
@@ -12,7 +12,6 @@ window.Alpine = Alpine;
 window.Chart = Chart;
 
 document.addEventListener('alpine:init', () => {
-    Alpine.data('toast', toast);
     Alpine.data('themeToggle', themeToggle);
     Alpine.data('languageSwitcher', languageSwitcher);
     Alpine.data('dashboardCharts', dashboardCharts);

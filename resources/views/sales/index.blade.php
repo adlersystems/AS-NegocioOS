@@ -59,8 +59,8 @@
                     @endif
 
                     <span class="ml-auto flex items-center gap-2">
-                        <x-button :href="route('sales.export.pdf', $exportQuery)" variant="secondary" size="sm" icon="download" @click="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_pdf') }}</x-button>
-                        <x-button :href="route('sales.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" @click="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
+                        <x-button :href="route('sales.export.pdf', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_pdf') }}</x-button>
+                        <x-button :href="route('sales.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
                     </span>
                 </div>
             </form>
