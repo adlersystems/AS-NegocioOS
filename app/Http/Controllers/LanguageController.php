@@ -25,6 +25,8 @@ class LanguageController extends Controller
 
         App::setLocale($locale);
 
-        return back()->cookie('locale', $locale, 60 * 24 * 365);
+        return back()
+            ->with('success', __('app.flash.language_switched'))
+            ->cookie('locale', $locale, 60 * 24 * 365);
     }
 }

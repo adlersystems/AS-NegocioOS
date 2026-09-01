@@ -215,6 +215,8 @@ return [
         'error' => 'Ocurrió un error al guardar :entity.',
         'stock_updated' => 'Inventario actualizado con éxito.',
         'sale_registered' => 'Venta registrada con éxito.',
+        'exported' => 'Exportación generada con éxito.',
+        'language_switched' => 'Idioma cambiado con éxito.',
     ],
 
     'permission_denied' => 'No tienes permisos para realizar esta acción.',

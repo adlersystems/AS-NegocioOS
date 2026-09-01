@@ -110,7 +110,7 @@ class SaleTest extends TestCase
     {
         $client = Client::factory()->create(['name' => 'Filtro Fechas']);
 
-        $saleIn = Sale::factory()->create(['client_id' => $client->id, 'created_at' => now()->subDays(2)]);
+        $saleIn = Sale::factory()->create(['client_id' => $client->id, 'created_at' => now()]);
         $saleOut = Sale::factory()->create(['client_id' => $client->id, 'created_at' => now()->subMonths(3)]);
 
         $from = now()->startOfWeek()->toDateString();

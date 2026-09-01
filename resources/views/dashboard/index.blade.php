@@ -5,7 +5,8 @@
         $canSell = in_array($user->role, ['admin', 'vendedor'], true);
         $canManage = in_array($user->role, ['admin', 'encargado'], true);
         $totalAlerts = $alerts['low_stock'] + $alerts['out_of_stock'] + $alerts['expiring_soon'];
-        $chartData = $charts + [
+        $chartData = [
+            'charts' => $charts,
             'currency' => \App\Models\Setting::currencySymbol(),
             'labels' => [
                 'sales' => __('app.dashboard.sales_count'),

@@ -215,6 +215,8 @@ return [
         'error' => 'An error occurred while saving :entity.',
         'stock_updated' => 'Inventory updated successfully.',
         'sale_registered' => 'Sale registered successfully.',
+        'exported' => 'Export generated successfully.',
+        'language_switched' => 'Language changed successfully.',
     ],
 
     'permission_denied' => 'You do not have permission to perform this action.',

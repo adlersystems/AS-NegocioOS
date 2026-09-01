@@ -11,6 +11,7 @@ export default function languageSwitcher() {
 
             fetch(`/language/${locale}`, {
                 method: 'POST',
+                redirect: 'manual',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                 },

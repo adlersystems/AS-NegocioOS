@@ -14,6 +14,8 @@ export default function toast(options = {}) {
                     this.push(type, value);
                 }
             });
+
+            window.showToast = (type, message) => this.push(type, message);
         },
 
         push(type, message) {

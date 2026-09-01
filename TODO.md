@@ -72,9 +72,13 @@
 - [x] **GATE: pint ✓ ▸ composer test (84 ✓) ▸ build ✓ ▸ smoke (/login, /sales, /sales/create, /products 200; excel 200) — STOP for review**
 - [x] **Fix bug #30**: productos con historial ya no fallan al borrar (`FOREIGN KEY constraint failed` por `sale_items.product_id restrictOnDelete`). `Product` usa soft-deletes (`deleted_at` migration + trait); destroy archiva el producto, historial/ventas/movimientos intactos; índice, busca y formulario de ventas lo ocultan. edición de ventas antiguas incluye productos archivados (`withTrashed`) en `sellableProducts()`/requests/reconcile. Tests: 3 nuevos (destroy con historial, `assertSoftDeleted`, edición de venta con producto archivado) + destrucción sin historial ajustada — **86 passing (294 assertions); pint ✓; migrate aplicada a la DB dev**
 
-## NEXT (al reanudar) — Fix TOAST confirmation messages
-- [ ] Revisar y corregir los mensajes de confirmación TOAST en todo el proyecto (flash `success`/`error` en los controladores y cómo los muestra la vista).
-- [ ] **GATE + STOP for review**
+## ✅ DONE — Fix TOAST confirmation messages
+- [x] **Diagnóstico**: el sistema de toast YA funciona de punta a punta (controladores flash, `toast.blade.php`, JS compilado). Verificado en Chrome real (Puppeteer): create/update/delete muestran el toast correctamente; la causa del "no aparece nada" era caché de assets del navegador (rebuild genera hashes nuevos).
+- [x] **Bug real encontrado y corregido**: dashboard lanzaba `Cannot read properties of undefined (reading 'salesMonthly')` — `dashboardCharts` esperaba `{ charts, currency, labels }` pero la vista pasaba los datos aplanados (`$charts` sin anidar bajo `charts`). Fijado en `dashboard/index.blade.php` (anidar bajo `charts`). Los 4 gráficos ahora renderizan (line/bar/doughnut/bar) sin errores de consola.
+- [x] **Toasts para exportaciones** (Pdf/Excel de clientes y ventas): los botones de exportación ahora muestran toast vía `window.showToast('success', ...)` expuesto por `toast.js` (las descargas no consumen flash de servidor). Key `app.flash.exported` en es/en.
+- [x] **Toast al cambiar idioma**: `LanguageController` ahora flashea `app.flash.language_switched`; `language.js` usa `redirect: 'manual'` para que el flash sobreviva hasta el `reload` (antes el fetch seguía el 302 y quemaba el flash).
+- [x] **Test flaky corregido**: `SaleTest::test_index_filters_by_date_range` fallaba cuando hoy=lunes (margen `subDays(2)` quedaba fuera de `[startOfWeek, now]`); se crea la venta dentro del rango (`now()`).
+- [x] **GATE: pint ✓ ▸ composer test (86 ✓ / 294 ✓) ▸ build ✓ ▸ smoke Chrome (login welcome toast, delete toast, dashboard charts, export toast, language toast — sin errores de consola) — STOP for review**
 
 ## Milestone F — Inventario
 - [ ] `InventoryController`: entries/exits, history, product movements
