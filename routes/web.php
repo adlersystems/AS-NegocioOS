@@ -47,8 +47,16 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,vendedor');
     Route::resource('sales', SaleController::class)->middleware('role:admin,vendedor');
 
-    Route::get('inventory', [InventoryController::class, 'index'])->name('inventory.index')
-        ->middleware('role:admin,encargado');
+    Route::controller(InventoryController::class)
+        ->middleware('role:admin,encargado')
+        ->name('inventory.')
+        ->group(function () {
+            Route::get('inventory', 'index')->name('index');
+            Route::get('inventory/create', 'create')->name('create');
+            Route::post('inventory', 'store')->name('store');
+            Route::get('inventory/export/pdf', 'exportPdf')->name('export.pdf');
+            Route::get('inventory/export/excel', 'exportExcel')->name('export.excel');
+        });
 
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index')
         ->middleware('role:admin,encargado');

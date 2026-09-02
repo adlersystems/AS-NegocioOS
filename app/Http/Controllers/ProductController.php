@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -50,6 +51,8 @@ class ProductController extends Controller
 
         $product = Product::create($data);
 
+        $this->logInitialStock($product);
+
         return redirect()
             ->route('products.show', $product)
             ->with('success', __('app.flash.created', ['entity' => __('app.products.singular')]));
@@ -89,7 +92,12 @@ class ProductController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
 
+        $oldStock = (int) $product->stock;
+        $delta = (int) $data['stock'] - $oldStock;
+
         $product->update($data);
+
+        $this->logAdjustment($product, $delta);
 
         return redirect()
             ->route('products.show', $product)
@@ -103,5 +111,37 @@ class ProductController extends Controller
         return redirect()
             ->route('products.index')
             ->with('success', __('app.flash.deleted', ['entity' => __('app.products.singular')]));
+    }
+
+    private function logInitialStock(Product $product): void
+    {
+        $quantity = (int) $product->stock;
+
+        if ($quantity <= 0) {
+            return;
+        }
+
+        InventoryMovement::create([
+            'product_id' => $product->id,
+            'user_id' => auth()->id(),
+            'type' => InventoryMovement::TYPE_IN,
+            'quantity' => $quantity,
+            'reason' => __('app.inventory.initial_stock'),
+        ]);
+    }
+
+    private function logAdjustment(Product $product, int $delta): void
+    {
+        if ($delta === 0) {
+            return;
+        }
+
+        InventoryMovement::create([
+            'product_id' => $product->id,
+            'user_id' => auth()->id(),
+            'type' => $delta > 0 ? InventoryMovement::TYPE_IN : InventoryMovement::TYPE_OUT,
+            'quantity' => abs($delta),
+            'reason' => __('app.inventory.adjustment'),
+        ]);
     }
 }

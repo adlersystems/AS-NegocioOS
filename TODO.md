@@ -82,11 +82,15 @@
 - [x] **Tests reescritos** (3): `ClientTest`, `SaleTest`, `ProductTest` ya no aseveran `data-flash-success`; ahora aseveran que el JSON en `data-toast-initial` contiene el mensaje esperado (`json_encode` con flags `JSON_HEX_TAG|APOS|AMP|QUOT`) + presencia de `data-toast-initial`. **86 passing / 297 assertions.**
 - [x] **GATE: pint ✓ ▸ composer test (86 ✓ / 297 ✓) ▸ build ✓ (app-Qgh3cLIW.js, app-DxLzFSn9.css) ▸ smoke Chrome headless ✓ — flujo real de borrado de cliente (caso reportado): flash `"Cliente eliminado con éxito."` en `data-toast-initial`, toast renderizado y VISIBLE (`as-toast-show`), sin errores de consola; login welcome toast ✓; `window.showToast` ✓; botones export con `onclick` ✓ — STOP for review**
 
-## Milestone F — Inventario
-- [ ] `InventoryController`: entries/exits, history, product movements
-- [ ] Critical stock alerts UI
-- [ ] Tests + export
-- [ ] **GATE + STOP for review**
+## Milestone F — Inventario ✅ DONE
+- [x] `InventoryController` reescrito: index con filtros (search name/SKU/reference, type in/out, fechas from/to) + métricas (entradas, salidas, bajo stock, agotados) + paginación; `filteredMovements()` compartido con exports
+- [x] `StoreInventoryMovementRequest` (producto existe, type in/out, quantity min:1, salida no puede exceder el stock disponible vía `after()`)
+- [x] Store ajusta el stock del producto (`+`/`-`) y crea el movimiento con `user_id = auth()->id()`; flash `inventory.stock_updated` + toast nativo
+- [x] Logging automático de inventario en `ProductController`: `logInitialStock()` (entrada "stock inicial" al crear producto con stock > 0) y `logAdjustment()` (entrada/salida "ajuste" según delta al actualizar)
+- [x] Export PDF (DomPDF landscape) + Excel (InventoryMovementsExport con FromCollection/WithHeadings/WithMapping, columna cantidad como `+N`/`-N`) con los mismos filtros; botones con `onclick` nativo + `window.showToast`
+- [x] Vistas `inventory/{index,create,export-pdf}.blade.php`; iconos `arrow-down`/`arrow-up` en `icon.blade.php`; i18n `inventory.*` en `lang/{es,en}/app.php`
+- [x] `InventoryTest` (14 tests): guest redirect, roles, filtros/búsqueda, create, store in/out, validaciones, toast, exports — **104 passing (348 assertions)**
+- [x] **GATE: pint ✓ ▸ composer test (104 ✓ / 348 ✓) ▸ build ✓ (app-PMI8KEzb.css) ▸ smoke Chrome headless ✓ (12/12: login, ledger+metrics+exports, form real, movimiento +7 verificado 52→59, toast stock_updated visible, producto refleja movimiento) — STOP for review**
 
 ## Milestone G — Reportes
 - [ ] `ReportController`: sales, clients, products, inventory, receivable

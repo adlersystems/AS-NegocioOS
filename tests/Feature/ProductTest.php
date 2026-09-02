@@ -361,6 +361,107 @@ class ProductTest extends TestCase
             ->assertSee('6');
     }
 
+    public function test_store_logs_initial_stock_movement(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('products.store'), [
+            'name' => 'Con Stock Inicial',
+            'stock' => 8,
+            'min_stock' => 2,
+            'production_cost' => 2,
+            'sale_price' => 5,
+        ]);
+
+        $product = Product::query()->where('name', 'Con Stock Inicial')->firstOrFail();
+
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'type' => InventoryMovement::TYPE_IN,
+            'quantity' => 8,
+            'reason' => __('app.inventory.initial_stock'),
+        ]);
+    }
+
+    public function test_store_does_not_log_stock_movement_when_zero(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->post(route('products.store'), [
+            'name' => 'Sin Stock',
+            'stock' => 0,
+            'min_stock' => 1,
+            'production_cost' => 2,
+            'sale_price' => 5,
+        ]);
+
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_update_logs_stock_adjustment_when_incremented(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['name' => 'Ajustable', 'sku' => 'AJU-1', 'stock' => 10]);
+
+        $this->actingAs($user)->put(route('products.update', $product), [
+            'name' => 'Ajustable',
+            'sku' => 'AJU-1',
+            'stock' => 15,
+            'min_stock' => 5,
+            'production_cost' => 3,
+            'sale_price' => 6,
+        ]);
+
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'type' => InventoryMovement::TYPE_IN,
+            'quantity' => 5,
+            'reason' => __('app.inventory.adjustment'),
+        ]);
+    }
+
+    public function test_update_logs_stock_adjustment_when_decremented(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['name' => 'Ajuste Salida', 'sku' => 'AJU-2', 'stock' => 20]);
+
+        $this->actingAs($user)->put(route('products.update', $product), [
+            'name' => 'Ajuste Salida',
+            'sku' => 'AJU-2',
+            'stock' => 12,
+            'min_stock' => 5,
+            'production_cost' => 3,
+            'sale_price' => 6,
+        ]);
+
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'type' => InventoryMovement::TYPE_OUT,
+            'quantity' => 8,
+            'reason' => __('app.inventory.adjustment'),
+        ]);
+    }
+
+    public function test_update_does_not_log_movement_when_stock_is_unchanged(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create(['name' => 'Sin Ajuste', 'sku' => 'AJU-3', 'stock' => 7]);
+
+        $this->actingAs($user)->put(route('products.update', $product), [
+            'name' => 'Sin Ajuste',
+            'sku' => 'AJU-3',
+            'stock' => 7,
+            'min_stock' => 5,
+            'production_cost' => 3,
+            'sale_price' => 6,
+        ]);
+
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
     public function test_creating_a_product_via_http_is_audited(): void
     {
         $user = User::factory()->create();
@@ -379,6 +480,6 @@ class ProductTest extends TestCase
             'auditable_type' => Product::class,
         ]);
 
-        $this->assertSame(1, AuditLog::query()->where('user_id', $user->id)->count());
+        $this->assertSame(2, AuditLog::query()->where('user_id', $user->id)->count());
     }
 }
