@@ -69,6 +69,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index')
         ->middleware('role:admin');
+    Route::post('settings', [SettingController::class, 'update'])->name('settings.update')
+        ->middleware('role:admin');
 
     Route::get('clients/export/pdf', [ClientController::class, 'exportPdf'])->name('clients.export.pdf');
     Route::get('clients/export/excel', [ClientController::class, 'exportExcel'])->name('clients.export.excel');

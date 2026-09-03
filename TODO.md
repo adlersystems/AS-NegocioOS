@@ -101,11 +101,16 @@
 - [x] Fix bug: fila de venta sin cliente (walk-in) rompía `route('clients.show', null)` — link guardado con `@if($sale->client)`
 - [x] **GATE: pint ✅ → composer test (119 ✅ / 421 ✅) → build ✅ → smoke Chrome headless ✅ (10/10) — STOP for review**
 
-## Milestone H — Configuración
-- [ ] `SettingController` (edit + update), file upload for logo
-- [ ] Settings reflected in invoices, currency formatting, IVA %, email
-- [ ] Tests
-- [ ] **GATE + STOP for review**
+## Milestone H — Configuración ✅ DONE
+- [x] `SettingController` (index/edit form + update), file upload for logo (stored on `public` disk under `logos/`, old logo deleted)
+- [x] `UpdateSettingsRequest` (company name, nit, address, phone, email, logo image, currency GTQ/USD, IVA 0–100, default language es/en)
+- [x] Settings view `settings/edit.blade.php` with Company / Contact / Preferences cards + logo preview/upload
+- [x] New `Setting::logoPath()/logoUrl()/logoDataUri()` helpers; `public/storage` symlink created
+- [x] Settings reflected: logo + company email now render on the invoice PDF header; logo shown in app sidebar + auth brand (icon fallback when none)
+- [x] `default_language` feeds `SetLocale` fallback (company default language)
+- [x] Currency formatting + IVA% already consumed everywhere (verified unchanged); invoice/IVA flow intact
+- [x] `SettingTest` (8 tests): guest redirect, admin-only access, update persists, logo upload, validation (IVA range, currency/language enum, required name), cache invalidation — **127 passing (455 assertions)**
+- [x] **GATE: pint ✅ · composer test (127) ✅ · build ✅ · smoke Chrome headless ✅ (9/9: admin auth, settings page + fields render, update posts+redirects with success toast, persisted name reflects in sidebar brand, restore) — STOP for review**
 
 ## Milestone I — API + Audit
 - [ ] Sanctum install + `routes/api.php` auth endpoints

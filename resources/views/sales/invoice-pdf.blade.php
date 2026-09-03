@@ -30,18 +30,26 @@
 </head>
 <body>
     <div class="header">
-        <div>
-            <div class="company">{{ $company['name'] }}</div>
-            <div class="company-meta">
-                @if ($company['nit'])
-                    {{ __('app.labels.nit') }}: {{ $company['nit'] }}<br>
-                @endif
-                @if ($company['address'])
-                    {{ $company['address'] }}
-                @endif
-                @if ($company['phone'])
-                    <br>{{ $company['phone'] }}
-                @endif
+        <div style="display:flex; align-items:center; gap:10px;">
+            @if ($logoUrl = \App\Models\Setting::logoDataUri())
+                <img src="{{ $logoUrl }}" style="max-height:48px; max-width:120px;" alt="">
+            @endif
+            <div>
+                <div class="company">{{ $company['name'] }}</div>
+                <div class="company-meta">
+                    @if ($company['nit'])
+                        {{ __('app.labels.nit') }}: {{ $company['nit'] }}<br>
+                    @endif
+                    @if ($company['address'])
+                        {{ $company['address'] }}
+                    @endif
+                    @if ($company['phone'])
+                        <br>{{ $company['phone'] }}
+                    @endif
+                    @if ($company['email'])
+                        <br>{{ $company['email'] }}
+                    @endif
+                </div>
             </div>
         </div>
         <div class="invoice-box">

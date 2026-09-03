@@ -261,6 +261,7 @@ return [
         'sale_registered' => 'Venta registrada con éxito.',
         'exported' => 'Exportación generada con éxito.',
         'language_switched' => 'Idioma cambiado con éxito.',
+        'settings_updated' => 'Configuración actualizada con éxito.',
     ],
 
     'permission_denied' => 'No tienes permisos para realizar esta acción.',
@@ -310,6 +311,30 @@ return [
     'currency' => [
         'gtq' => 'Quetzales (GTQ)',
         'usd' => 'Dólares (USD)',
+    ],
+
+    'settings' => [
+        'title' => 'Configuración',
+        'page_desc' => 'Personaliza los datos de tu empresa, la identidad visual y las preferencias de facturación.',
+        'company_section' => 'Datos de la empresa',
+        'company_section_desc' => 'Nombre y datos fiscales que aparecen en las facturas y reportes.',
+        'company_name' => 'Nombre de la empresa',
+        'logo' => 'Logo',
+        'logo_desc' => 'Imagen PNG, JPG, SVG o WebP de hasta 2 MB.',
+        'logo_current' => 'Logo actual',
+        'logo_upload' => 'Subir nuevo logo',
+        'logo_remove' => 'No cambiar',
+        'contact_section' => 'Contacto',
+        'contact_section_desc' => 'Información de contacto que se muestra en los documentos generados.',
+        'preferences_section' => 'Preferencias',
+        'preferences_section_desc' => 'Moneda, impuesto y configuración regional.',
+        'currency' => 'Moneda',
+        'iva_percentage' => 'Porcentaje de IVA',
+        'iva_desc' => 'Tasa de impuesto aplicada a las ventas.',
+        'default_language' => 'Idioma por defecto',
+        'default_language_desc' => 'Idioma base de la aplicación.',
+        'language_es' => 'Español',
+        'language_en' => 'English',
     ],
 
 ];

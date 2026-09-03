@@ -14,6 +14,7 @@
     }));
 
     $companyName = \App\Models\Setting::get('company_name', 'AS-NegocioOS');
+    $logoUrl = \App\Models\Setting::logoUrl();
 @endphp
 
 <!DOCTYPE html>
@@ -54,9 +55,13 @@
             :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full', collapsed ? 'lg:w-20' : 'lg:w-64']"
         >
             <div class="flex items-center gap-3 border-b border-border px-5 py-5" :class="collapsed ? 'lg:justify-center' : ''">
-                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
-                    <x-icon name="dashboard" class="h-5 w-5" />
-                </div>
+                @if ($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="{{ $companyName }}" class="h-10 w-10 shrink-0 rounded-xl border border-border object-contain bg-surface-sunken p-1" :class="collapsed ? 'lg:hidden' : ''">
+                @else
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
+                        <x-icon name="dashboard" class="h-5 w-5" />
+                    </div>
+                @endif
                 <div class="min-w-0" :class="collapsed ? 'lg:hidden' : ''">
                     <p class="truncate text-sm font-bold text-on-surface">{{ $companyName }}</p>
                     <p class="text-xs text-on-surface-muted">{{ __('app.app_tagline') }}</p>

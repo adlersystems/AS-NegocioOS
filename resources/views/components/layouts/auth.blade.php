@@ -2,6 +2,7 @@
 
 @php
     $companyName = \App\Models\Setting::get('company_name', 'AS-NegocioOS');
+    $logoUrl = \App\Models\Setting::logoUrl();
 @endphp
 
 <!DOCTYPE html>
@@ -28,9 +29,13 @@
     <div class="flex min-h-screen flex-col items-center justify-center px-4 py-10">
 
         <div class="mb-6 flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
-                <x-icon name="dashboard" class="h-6 w-6" />
-            </div>
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="{{ $companyName }}" class="h-11 w-11 rounded-xl border border-border object-contain bg-surface-sunken p-1">
+            @else
+                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
+                    <x-icon name="dashboard" class="h-6 w-6" />
+                </div>
+            @endif
             <div>
                 <p class="text-lg font-bold text-on-surface">{{ $companyName }}</p>
                 <p class="text-xs text-on-surface-muted">{{ __('app.app_tagline') }}</p>

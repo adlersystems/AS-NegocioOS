@@ -261,6 +261,7 @@ return [
         'sale_registered' => 'Sale registered successfully.',
         'exported' => 'Export generated successfully.',
         'language_switched' => 'Language changed successfully.',
+        'settings_updated' => 'Settings updated successfully.',
     ],
 
     'permission_denied' => 'You do not have permission to perform this action.',
@@ -310,6 +311,30 @@ return [
     'currency' => [
         'gtq' => 'Quetzales (GTQ)',
         'usd' => 'US Dollars (USD)',
+    ],
+
+    'settings' => [
+        'title' => 'Settings',
+        'page_desc' => 'Customize your company data, visual identity and invoicing preferences.',
+        'company_section' => 'Company details',
+        'company_section_desc' => 'Name and tax details shown on invoices and reports.',
+        'company_name' => 'Company name',
+        'logo' => 'Logo',
+        'logo_desc' => 'PNG, JPG, SVG or WebP image up to 2 MB.',
+        'logo_current' => 'Current logo',
+        'logo_upload' => 'Upload new logo',
+        'logo_remove' => 'Keep current',
+        'contact_section' => 'Contact',
+        'contact_section_desc' => 'Contact information shown on generated documents.',
+        'preferences_section' => 'Preferences',
+        'preferences_section_desc' => 'Currency, tax and regional settings.',
+        'currency' => 'Currency',
+        'iva_percentage' => 'VAT percentage',
+        'iva_desc' => 'Tax rate applied to sales.',
+        'default_language' => 'Default language',
+        'default_language_desc' => 'Base language of the application.',
+        'language_es' => 'Spanish',
+        'language_en' => 'English',
     ],
 
 ];
