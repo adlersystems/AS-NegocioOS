@@ -16,6 +16,8 @@
             <x-button :href="route('clients.create')" icon="plus">{{ __('app.clients.new_client') }}</x-button>
         </div>
 
+        <div class="divider">&nbsp;</div>
+
         {{-- Toolbar --}}
         <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <form method="GET" action="{{ route('clients.index') }}" class="relative w-full sm:max-w-xs">
@@ -40,6 +42,8 @@
                 <x-button :href="route('clients.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
             </div>
         </div>
+
+        <div class="divider">&nbsp;</div>
 
         {{-- Client list --}}
         <x-card class="mt-4">

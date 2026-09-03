@@ -17,6 +17,8 @@
             <x-button :href="route('products.create')" icon="plus">{{ __('app.products.new_product') }}</x-button>
         </div>
 
+        <div class="divider">&nbsp;</div>
+
         {{-- Toolbar --}}
         <x-card class="mt-6">
             <form method="GET" action="{{ route('products.index') }}" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -62,6 +64,8 @@
                 </div>
             </form>
         </x-card>
+
+        <div class="divider">&nbsp;</div>
 
         {{-- Product list --}}
         <x-card class="mt-4">

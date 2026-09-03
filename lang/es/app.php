@@ -236,6 +236,21 @@ return [
         'destroy_reason' => 'Venta anulada',
     ],
 
+    'reports' => [
+        'list_desc' => 'Analiza ventas, clientes, productos, inventario y cuentas por cobrar.',
+        'type_sales' => 'Ventas',
+        'type_inventory' => 'Inventario',
+        'type_clients' => 'Clientes',
+        'type_products' => 'Productos',
+        'filter_client' => 'Cliente',
+        'filter_product' => 'Producto',
+        'filter_seller' => 'Vendedor',
+        'no_results' => 'No se encontraron resultados para este reporte.',
+        'no_results_desc' => 'Amplía las fechas o cambia los filtros para obtener más datos.',
+        'export_title' => 'Reporte de :type',
+        'exported_at' => 'Generado el :date por :user',
+    ],
+
     'flash' => [
         'created' => ':entity creado con éxito.',
         'updated' => ':entity actualizado con éxito.',

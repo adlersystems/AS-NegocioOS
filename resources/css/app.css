@@ -155,3 +155,7 @@ body {
     background-color: var(--color-primary);
     color: #ffffff;
 }
+
+.divider {
+    margin: 5px 0px;
+}

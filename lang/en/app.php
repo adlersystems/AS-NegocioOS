@@ -236,6 +236,21 @@ return [
         'destroy_reason' => 'Cancelled sale',
     ],
 
+    'reports' => [
+        'list_desc' => 'Analyze sales, clients, products, inventory and accounts receivable.',
+        'type_sales' => 'Sales',
+        'type_inventory' => 'Inventory',
+        'type_clients' => 'Clients',
+        'type_products' => 'Products',
+        'filter_client' => 'Client',
+        'filter_product' => 'Product',
+        'filter_seller' => 'Seller',
+        'no_results' => 'No results found for this report.',
+        'no_results_desc' => 'Widen the dates or change the filters to get more data.',
+        'export_title' => ':type report',
+        'exported_at' => 'Generated on :date by :user',
+    ],
+
     'flash' => [
         'created' => ':entity created successfully.',
         'updated' => ':entity updated successfully.',

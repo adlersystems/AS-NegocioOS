@@ -58,8 +58,14 @@ Route::middleware('auth')->group(function () {
             Route::get('inventory/export/excel', 'exportExcel')->name('export.excel');
         });
 
-    Route::get('reports', [ReportController::class, 'index'])->name('reports.index')
-        ->middleware('role:admin,encargado');
+    Route::controller(ReportController::class)
+        ->middleware('role:admin,encargado')
+        ->name('reports.')
+        ->group(function () {
+            Route::get('reports', 'index')->name('index');
+            Route::get('reports/export/pdf', 'exportPdf')->name('export.pdf');
+            Route::get('reports/export/excel', 'exportExcel')->name('export.excel');
+        });
 
     Route::get('settings', [SettingController::class, 'index'])->name('settings.index')
         ->middleware('role:admin');

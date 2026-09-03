@@ -92,12 +92,14 @@
 - [x] `InventoryTest` (14 tests): guest redirect, roles, filtros/búsqueda, create, store in/out, validaciones, toast, exports — **104 passing (348 assertions)**
 - [x] **GATE: pint ✓ ▸ composer test (104 ✓ / 348 ✓) ▸ build ✓ (app-PMI8KEzb.css) ▸ smoke Chrome headless ✓ (12/12: login, ledger+metrics+exports, form real, movimiento +7 verificado 52→59, toast stock_updated visible, producto refleja movimiento) — STOP for review**
 
-## Milestone G — Reportes
-- [ ] `ReportController`: sales, clients, products, inventory, receivable
-- [ ] Filters (date range, client, product, seller)
-- [ ] PDF + Excel exports
-- [ ] Tests
-- [ ] **GATE + STOP for review**
+## Milestone G — Reportes ✅ DONE
+- [x] `ReportController` reescrito: sales, clients, products, inventory (4 tipos; **cuentas por cobrar difiere a M-H/API** — ver STOP)
+- [x] Filters (date range, client_id, product_id, seller_id según tipo) + `indexMetrics()` + vista con tabs por tipo
+- [x] PDF (DomPDF landscape A4) + Excel (ReportsExport FromArray+WithHeadings) exports por los 4 tipos; botones con `onclick` nativo + `window.showToast`
+- [x] Vistas `reports/index` + partials `{sales,inventory,clients,products}` + `export-pdf`; i18n `reports.*` en `lang/{es,en}`
+- [x] `ReportTest` (15 tests): gates, roles, fallback tipo inválido, rows/totales, filtros, exports — **119 passing (421 assertions)**
+- [x] Fix bug: fila de venta sin cliente (walk-in) rompía `route('clients.show', null)` — link guardado con `@if($sale->client)`
+- [x] **GATE: pint ✅ → composer test (119 ✅ / 421 ✅) → build ✅ → smoke Chrome headless ✅ (10/10) — STOP for review**
 
 ## Milestone H — Configuración
 - [ ] `SettingController` (edit + update), file upload for logo

@@ -28,9 +28,23 @@
     <div class="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <x-card><x-metric :label="__('app.inventory.entries')" :value="number_format($entries)" icon="arrow-down" color="success" /></x-card>
         <x-card><x-metric :label="__('app.inventory.exits')" :value="number_format($exits)" icon="arrow-up" color="danger" /></x-card>
-        <x-card><x-metric :label="__('app.inventory.low_stock')" :value="number_format($lowStock)" icon="alert" color="warning" /></x-card>
-        <x-card><x-metric :label="__('app.inventory.out_of_stock')" :value="number_format($outOfStock)" icon="alert" color="danger" /></x-card>
+        @if ($lowStock > 0)
+            <a href="{{ route('products.index', ['stock' => 'low']) }}" class="transition hover:-translate-y-0.5">
+                <x-card class="h-full"><x-metric :label="__('app.inventory.low_stock')" :value="number_format($lowStock)" icon="alert" color="warning" :hint="__('app.inventory.view_products')" /></x-card>
+            </a>
+        @else
+            <x-card><x-metric :label="__('app.inventory.low_stock')" :value="number_format($lowStock)" icon="alert" color="warning" /></x-card>
+        @endif
+        @if ($outOfStock > 0)
+            <a href="{{ route('products.index', ['stock' => 'out']) }}" class="transition hover:-translate-y-0.5">
+                <x-card class="h-full"><x-metric :label="__('app.inventory.out_of_stock')" :value="number_format($outOfStock)" icon="alert" color="danger" :hint="__('app.inventory.view_products')" /></x-card>
+            </a>
+        @else
+            <x-card><x-metric :label="__('app.inventory.out_of_stock')" :value="number_format($outOfStock)" icon="alert" color="danger" /></x-card>
+        @endif
     </div>
+
+    <div class="divider">&nbsp;</div>
 
     {{-- Toolbar --}}
     <x-card class="mt-4">
@@ -76,6 +90,8 @@
             </div>
         </form>
     </x-card>
+
+    <div class="divider">&nbsp;</div>
 
     {{-- Movements ledger --}}
     <x-card class="mt-4">
