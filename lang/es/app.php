@@ -237,7 +237,7 @@ return [
     ],
 
     'reports' => [
-        'list_desc' => 'Analiza ventas, clientes, productos, inventario y cuentas por cobrar.',
+        'list_desc' => 'Analiza ventas, clientes, productos e inventario.',
         'type_sales' => 'Ventas',
         'type_inventory' => 'Inventario',
         'type_clients' => 'Clientes',

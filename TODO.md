@@ -93,7 +93,7 @@
 - [x] **GATE: pint ✓ ▸ composer test (104 ✓ / 348 ✓) ▸ build ✓ (app-PMI8KEzb.css) ▸ smoke Chrome headless ✓ (12/12: login, ledger+metrics+exports, form real, movimiento +7 verificado 52→59, toast stock_updated visible, producto refleja movimiento) — STOP for review**
 
 ## Milestone G — Reportes ✅ DONE
-- [x] `ReportController` reescrito: sales, clients, products, inventory (4 tipos; **cuentas por cobrar difiere a M-H/API** — ver STOP)
+- [x] `ReportController` reescrito: sales, clients, products, inventory (4 tipos; **cuentas por cobrar diferidas** — decisión del usuario) y `list_desc` ajustado para no prometer receivables
 - [x] Filters (date range, client_id, product_id, seller_id según tipo) + `indexMetrics()` + vista con tabs por tipo
 - [x] PDF (DomPDF landscape A4) + Excel (ReportsExport FromArray+WithHeadings) exports por los 4 tipos; botones con `onclick` nativo + `window.showToast`
 - [x] Vistas `reports/index` + partials `{sales,inventory,clients,products}` + `export-pdf`; i18n `reports.*` en `lang/{es,en}`

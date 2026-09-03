@@ -237,7 +237,7 @@ return [
     ],
 
     'reports' => [
-        'list_desc' => 'Analyze sales, clients, products, inventory and accounts receivable.',
+        'list_desc' => 'Analyze sales, clients, products and inventory.',
         'type_sales' => 'Sales',
         'type_inventory' => 'Inventory',
         'type_clients' => 'Clients',
