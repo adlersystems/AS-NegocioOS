@@ -20,7 +20,7 @@ return [
         ['name' => 'products.index', 'label' => 'app.menu.products', 'icon' => 'products'],
         ['name' => 'sales.index', 'label' => 'app.menu.sales', 'icon' => 'sales'],
         ['name' => 'inventory.index', 'label' => 'app.menu.inventory', 'icon' => 'inventory'],
-        ['name' => 'reports.index', 'label' => 'app.menu.reports', 'icon' => 'box'],
+        ['name' => 'reports.index', 'label' => 'app.menu.reports', 'icon' => 'reports'],
         ['name' => 'settings.index', 'label' => 'app.menu.settings', 'icon' => 'settings'],
     ],
 
