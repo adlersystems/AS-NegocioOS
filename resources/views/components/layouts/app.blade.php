@@ -3,23 +3,12 @@
 @php
     $user = auth()->user();
 
-    $routes = [
-        ['name' => 'dashboard', 'label' => __('app.menu.dashboard'), 'icon' => 'dashboard'],
-        ['name' => 'clients.index', 'label' => __('app.menu.clients'), 'icon' => 'clients'],
-        ['name' => 'products.index', 'label' => __('app.menu.products'), 'icon' => 'products'],
-        ['name' => 'sales.index', 'label' => __('app.menu.sales'), 'icon' => 'sales'],
-        ['name' => 'inventory.index', 'label' => __('app.menu.inventory'), 'icon' => 'inventory'],
-        ['name' => 'reports.index', 'label' => __('app.menu.reports'), 'icon' => 'reports'],
-        ['name' => 'settings.index', 'label' => __('app.menu.settings'), 'icon' => 'settings'],
-    ];
+    $routes = config('sidebar.links', []);
+    $roleMap = config('sidebar.roles', []);
+    $allRoles = ['admin', 'vendedor', 'encargado'];
 
-    $visibleRoutes = array_values(array_filter($routes, function (array $route) use ($user) {
-        $roles = match ($route['name']) {
-            'sales.index' => ['admin', 'vendedor'],
-            'inventory.index', 'reports.index' => ['admin', 'encargado'],
-            'settings.index' => ['admin'],
-            default => ['admin', 'vendedor', 'encargado'],
-        };
+    $visibleRoutes = array_values(array_filter($routes, function (array $route) use ($user, $roleMap, $allRoles) {
+        $roles = $roleMap[$route['name']] ?? $allRoles;
 
         return in_array($user->role, $roles, true);
     }));
@@ -90,7 +79,7 @@
                     @endphp
                     <a
                         href="{{ route($route['name']) }}"
-                        :title="collapsed ? '{{ $route['label'] }}' : null"
+                        :title="collapsed ? '{{ __($route['label']) }}' : null"
                         @class([
                             'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition',
                             'bg-primary-soft text-primary' => $isActive,
@@ -99,7 +88,7 @@
                         :class="collapsed ? 'lg:justify-center' : ''"
                     >
                         <x-icon :name="$route['icon']" class="h-5 w-5 shrink-0" />
-                        <span :class="collapsed ? 'lg:hidden' : ''">{{ $route['label'] }}</span>
+                        <span :class="collapsed ? 'lg:hidden' : ''">{{ __($route['label']) }}</span>
                     </a>
                 @endforeach
             </nav>
