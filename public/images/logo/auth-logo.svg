@@ -1,0 +1,7 @@
+<svg width="231" height="48" viewBox="0 0 231 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="48" height="48" rx="12" fill="#465FFF"/>
+<path d="M16.5 10.5 V37.5" stroke="white" stroke-width="5.4" stroke-linecap="round"/>
+<path d="M31.5 10.5 V37.5" stroke="white" stroke-width="5.4" stroke-linecap="round"/>
+<path d="M16.5 37.5 L31.5 10.5" stroke="white" stroke-width="5.4" stroke-linecap="round"/>
+<text x="60" y="33" font-family="Outfit, Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#FFFFFF" letter-spacing="-0.8">NegocioOS</text>
+</svg>

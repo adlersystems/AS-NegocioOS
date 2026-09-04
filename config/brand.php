@@ -24,7 +24,7 @@ return [
         // Static logo for the product brand. Put the file under public/images/
         // and reference it here. When the file does not exist, the UI falls
         // back to the default icon mark.
-        'logo' => '/images/product-logo.svg',
+        'logo' => '/images/logo/logo-icon.svg',
 
         // Translation key holding the product slogan / tagline.
         'slogan_key' => 'app.app_tagline',
