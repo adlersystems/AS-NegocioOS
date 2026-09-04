@@ -1,7 +1,8 @@
 @props(['title' => 'AS-NegocioOS'])
 
 @php
-    $companyName = \App\Models\Setting::get('company_name', 'AS-NegocioOS');
+    $companyName = \App\Models\Setting::get('company_name', config('brand.name_default'));
+    $slogan = __(config('brand.slogan_key'));
     $logoUrl = \App\Models\Setting::logoUrl();
 @endphp
 
@@ -38,7 +39,7 @@
             @endif
             <div>
                 <p class="text-lg font-bold text-on-surface">{{ $companyName }}</p>
-                <p class="text-xs text-on-surface-muted">{{ __('app.app_tagline') }}</p>
+                <p class="text-xs text-on-surface-muted">{{ $slogan }}</p>
             </div>
         </div>
 

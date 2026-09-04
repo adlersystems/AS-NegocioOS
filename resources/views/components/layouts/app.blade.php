@@ -13,7 +13,8 @@
         return in_array($user->role, $roles, true);
     }));
 
-    $companyName = \App\Models\Setting::get('company_name', 'AS-NegocioOS');
+    $companyName = \App\Models\Setting::get('company_name', config('brand.name_default'));
+    $slogan = __(config('brand.slogan_key'));
     $logoUrl = \App\Models\Setting::logoUrl();
 @endphp
 
@@ -64,7 +65,7 @@
                 @endif
                 <div class="min-w-0" :class="collapsed ? 'lg:hidden' : ''">
                     <p class="truncate text-sm font-bold text-on-surface">{{ $companyName }}</p>
-                    <p class="text-xs text-on-surface-muted">{{ __('app.app_tagline') }}</p>
+                    <p class="text-xs text-on-surface-muted">{{ $slogan }}</p>
                 </div>
                 <button
                     type="button"
@@ -106,6 +107,23 @@
                         <span :class="collapsed ? 'lg:hidden' : ''">{{ __('app.logout') }}</span>
                     </button>
                 </form>
+            </div>
+
+            {{-- Product identity (logo + name + slogan) --}}
+            <div class="border-t border-border px-5 py-4" :class="collapsed ? 'lg:border-t lg:px-0' : ''">
+                <div class="flex items-center gap-3">
+                    @if ($logoUrl)
+                        <img src="{{ $logoUrl }}" alt="{{ $companyName }}" class="h-9 w-9 shrink-0 rounded-lg border border-border object-contain bg-surface-sunken p-0.5 lg:hidden" :class="collapsed ? 'lg:hidden' : ''">
+                    @else
+                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary lg:hidden">
+                            <x-icon name="dashboard" class="h-4 w-4" />
+                        </div>
+                    @endif
+                    <div class="min-w-0" :class="collapsed ? 'lg:hidden' : ''">
+                        <p class="truncate text-xs font-bold text-on-surface">{{ $companyName }}</p>
+                        <p class="truncate text-[11px] text-on-surface-muted">{{ $slogan }}</p>
+                    </div>
+                </div>
             </div>
         </aside>
 
