@@ -3,21 +3,30 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | App identity (brand)
+    | Product identity (the app / maker's brand)
     |--------------------------------------------------------------------------
-    | The product identity shown in the sidebar (top and bottom) and on the
-    | auth pages: a logo image, the company name and a slogan.
+    | This is the brand of the software PRODUCT itself (the maker), shown in
+    | the bottom of the sidebar and on auth pages. It is intentionally NOT
+    | editable from the UI/generals settings — it is the maker's own brand.
     |
-    | The logo and company name are stored as editable Settings (used when a
-    | value exists); the fallbacks below kick in when no setting row is found.
+    | This is distinct from the customer's business identity, which IS editable
+    | by the user under "Settings" (company name, logo, slogan/tagline) and is
+    | rendered at the top of the sidebar / app header.
+    |
+    | To change the product brand, edit this file directly (or drop a new logo
+    | in public/images/ and point 'logo' to it).
     */
 
-    // Company name fallback when no Setting row exists.
-    'name_default' => 'AS-NegocioOS',
+    // Hardcoded product name (the app's own brand name).
+    'product' => [
+        'name' => 'AS-NegocioOS',
 
-    // Translation key holding the slogan/tagline rendered under the name.
-    'slogan_key' => 'app.app_tagline',
+        // Static logo for the product brand. Put the file under public/images/
+        // and reference it here. When the file does not exist, the UI falls
+        // back to the default icon mark.
+        'logo' => '/images/product-logo.svg',
 
-    // Fallback slogan text if the translation key is missing.
-    'slogan_fallback' => 'Business management system',
+        // Translation key holding the product slogan / tagline.
+        'slogan_key' => 'app.app_tagline',
+    ],
 ];

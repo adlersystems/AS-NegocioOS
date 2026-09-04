@@ -1,9 +1,12 @@
 @props(['title' => 'AS-NegocioOS'])
 
 @php
-    $companyName = \App\Models\Setting::get('company_name', config('brand.name_default'));
-    $slogan = __(config('brand.slogan_key'));
-    $logoUrl = \App\Models\Setting::logoUrl();
+    // The auth page shows the product (maker's) brand, not the customer's.
+    $productBrand = config('brand.product', []);
+    $productName = $productBrand['name'] ?? 'AS-NegocioOS';
+    $productSlogan = __($productBrand['slogan_key'] ?? 'app.app_tagline');
+    $logoPath = $productBrand['logo'] ?? null;
+    $logoUrl = $logoPath && file_exists(public_path($logoPath)) ? asset($logoPath) : null;
 @endphp
 
 <!DOCTYPE html>
@@ -13,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title }} — {{ $companyName }}</title>
+    <title>{{ $title }} — {{ $productName }}</title>
 
     <script>
         (() => {
@@ -31,15 +34,15 @@
 
         <div class="mb-6 flex items-center gap-3">
             @if ($logoUrl)
-                <img src="{{ $logoUrl }}" alt="{{ $companyName }}" class="h-11 w-11 rounded-xl border border-border object-contain bg-surface-sunken p-1">
+                <img src="{{ $logoUrl }}" alt="{{ $productName }}" class="h-11 w-11 rounded-xl border border-border object-contain bg-surface-sunken p-1">
             @else
                 <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
                     <x-icon name="dashboard" class="h-6 w-6" />
                 </div>
             @endif
             <div>
-                <p class="text-lg font-bold text-on-surface">{{ $companyName }}</p>
-                <p class="text-xs text-on-surface-muted">{{ $slogan }}</p>
+                <p class="text-lg font-bold text-on-surface">{{ $productName }}</p>
+                <p class="text-xs text-on-surface-muted">{{ $productSlogan }}</p>
             </div>
         </div>
 
