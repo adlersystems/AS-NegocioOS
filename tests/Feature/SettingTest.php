@@ -59,6 +59,21 @@ class SettingTest extends TestCase
         $this->assertSame('en', Setting::get('default_language'));
     }
 
+    public function test_admin_can_update_the_tagline(): void
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->post(route('settings.update'), [
+                'company_name' => 'AS-NegocioOS',
+                'tagline' => 'Calidad y confianza',
+                'currency' => 'GTQ',
+                'iva_percentage' => '12',
+                'default_language' => 'es',
+            ])
+            ->assertRedirect(route('settings.index'));
+
+        $this->assertSame('Calidad y confianza', Setting::get('tagline'));
+    }
+
     public function test_admin_can_upload_a_logo(): void
     {
         Storage::fake('public');

@@ -319,6 +319,8 @@ return [
         'company_section' => 'Company details',
         'company_section_desc' => 'Name and tax details shown on invoices and reports.',
         'company_name' => 'Company name',
+        'tagline' => 'Tagline',
+        'tagline_desc' => 'Short phrase shown next to the company name.',
         'logo' => 'Logo',
         'logo_desc' => 'PNG, JPG, SVG or WebP image up to 2 MB.',
         'logo_current' => 'Current logo',

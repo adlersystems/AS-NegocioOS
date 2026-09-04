@@ -319,6 +319,8 @@ return [
         'company_section' => 'Datos de la empresa',
         'company_section_desc' => 'Nombre y datos fiscales que aparecen en las facturas y reportes.',
         'company_name' => 'Nombre de la empresa',
+        'tagline' => 'Eslogan',
+        'tagline_desc' => 'Frase corta mostrada junto al nombre de la empresa.',
         'logo' => 'Logo',
         'logo_desc' => 'Imagen PNG, JPG, SVG o WebP de hasta 2 MB.',
         'logo_current' => 'Logo actual',

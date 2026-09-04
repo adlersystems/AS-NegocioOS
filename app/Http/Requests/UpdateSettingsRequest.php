@@ -18,6 +18,7 @@ class UpdateSettingsRequest extends FormRequest
     {
         return [
             'company_name' => ['required', 'string', 'max:130'],
+            'tagline' => ['nullable', 'string', 'max:255'],
             'nit' => ['nullable', 'string', 'max:40'],
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:40'],
@@ -36,6 +37,7 @@ class UpdateSettingsRequest extends FormRequest
     {
         return [
             'company_name' => __('app.settings.company_name'),
+            'tagline' => __('app.settings.tagline'),
             'nit' => __('app.labels.nit'),
             'address' => __('app.labels.address'),
             'phone' => __('app.labels.phone'),

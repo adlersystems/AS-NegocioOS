@@ -18,6 +18,7 @@ class Setting extends Model
     /** @var array<string, string> Default values keyed by setting key. */
     public const DEFAULTS = [
         'company_name' => 'AS-NegocioOS',
+        'tagline' => null,
         'logo' => null,
         'address' => null,
         'phone' => null,

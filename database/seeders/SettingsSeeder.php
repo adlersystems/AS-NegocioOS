@@ -14,6 +14,7 @@ class SettingsSeeder extends Seeder
     {
         Setting::setMany([
             'company_name' => 'AS-NegocioOS',
+            'tagline' => '',
             'logo' => '',
             'address' => 'Ciudad de Guatemala, Guatemala',
             'phone' => '5555-0000',

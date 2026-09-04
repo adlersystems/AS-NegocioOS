@@ -24,6 +24,11 @@
                 </div>
 
                 <div class="sm:col-span-2">
+                    <x-input name="tagline" :label="__('app.settings.tagline')" :value="old('tagline', $settings['tagline'] ?? '')" />
+                    <p class="mt-1 text-xs text-on-surface-muted">{{ __('app.settings.tagline_desc') }}</p>
+                </div>
+
+                <div class="sm:col-span-2">
                     <x-label for="logo">{{ __('app.settings.logo') }}</x-label>
                     <div class="mt-3 flex flex-wrap items-center gap-4">
                         @if ($logoUrl = \App\Models\Setting::logoUrl())
