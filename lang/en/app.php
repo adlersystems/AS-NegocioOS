@@ -94,6 +94,14 @@ return [
         'subtotal' => 'Subtotal',
         'tax' => 'IVA',
         'status' => 'Status',
+        'user' => 'User',
+        'action' => 'Action',
+        'model' => 'Model',
+        'record' => 'Record',
+        'ip' => 'IP',
+        'details' => 'Details',
+        'attribute' => 'Attribute',
+        'user_agent' => 'User agent',
     ],
 
     'clients' => [
@@ -351,6 +359,34 @@ return [
         'default_language_desc' => 'Base language of the application.',
         'language_es' => 'Spanish',
         'language_en' => 'English',
+    ],
+
+    'models' => [
+        'client' => 'Client',
+        'product' => 'Product',
+        'sale' => 'Sale',
+        'sale_item' => 'Sale item',
+        'inventory_movement' => 'Inventory movement',
+        'setting' => 'Setting',
+        'user' => 'User',
+    ],
+
+    'audit' => [
+        'list_desc' => 'Browse the history of user actions on your data.',
+        'detail_title' => 'Audit detail',
+        'detail_desc' => 'Details of the recorded action on a record.',
+        'all_models' => 'All models',
+        'all_actions' => 'All actions',
+        'all_users' => 'All users',
+        'action_created' => 'Create',
+        'action_updated' => 'Update',
+        'action_deleted' => 'Delete',
+        'no_logs' => 'No audit records.',
+        'no_logs_desc' => 'User actions will appear here as they modify data.',
+        'changes' => 'Changes',
+        'old_value' => 'Previous value',
+        'new_value' => 'New value',
+        'no_changes' => 'No attribute changes were recorded.',
     ],
 
 ];

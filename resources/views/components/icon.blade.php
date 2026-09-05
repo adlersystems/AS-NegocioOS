@@ -44,6 +44,7 @@
         'print' => 'printer',
         'calendar' => 'calendar',
         'coins' => 'banknotes',
+        'audit' => 'clock',
     ];
 
     $heroName = null;

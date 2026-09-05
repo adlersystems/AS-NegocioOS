@@ -112,13 +112,15 @@
 - [x] `SettingTest` (8 tests): guest redirect, admin-only access, update persists, logo upload, validation (IVA range, currency/language enum, required name), cache invalidation — **127 passing (455 assertions)**
 - [x] **GATE: pint ✅ · composer test (127) ✅ · build ✅ · smoke Chrome headless ✅ (9/9: admin auth, settings page + fields render, update posts+redirects with success toast, persisted name reflects in sidebar brand, restore) — STOP for review**
 
-## Milestone I — API + Audit
-- [ ] Sanctum install + `routes/api.php` auth endpoints
-- [ ] API: dashboard, clients, products, sales, inventory, reports, settings
-- [ ] `AuditLog` trait wired into critical models
-- [ ] Audit log view + filters
-- [ ] Tests for API endpoints + audit records
-- [ ] **GATE + STOP for review**
+## Milestone I — API + Audit ✅ DONE
+- [x] Sanctum 4.3 install (`composer require laravel/sanctum`) + published config/migration `create_personal_access_tokens_table`; `User` uses `HasApiTokens`; `guard => []` in `config/sanctum.php` (token-only API, no session fallback)
+- [x] `routes/api.php` registered via `withRouting(api:)`: `POST auth/login` (public) + `auth:sanctum` group: logout, me, dashboard, clients, products, sales, inventory, reports, settings (admin-only `role:admin`)
+- [x] API controllers (`App\Http\Controllers\Api`): Auth (login/logout/me), Dashboard (metrics/alerts/charts), Client, Product, Sale, Inventory, Report, Setting + shared `PaginatesToJson` trait with pagination `meta`
+- [x] Report queries extracted to `App\Services\ReportService` (shared by web `ReportController` and API) — `indexMetrics()` keeps `inventoryValue` as money string for the web view
+- [x] Audit log view: `AuditLogController` + `audit/index` & `audit/show` views (action badges, record links, old/new diff), filters model/action/user/date-range, paginated 25/page; sidebar entry (admin role) + icon + i18n; `AuditLog::contextLabel()/modelShortName()/isUpdate()/isDelete()`; label falls back to recorded snapshot values after a record is deleted
+- [x] Audit logging already wired (Milestone B `RecordsActivity`) — view + filters were the missing piece
+- [x] Tests: `ApiAuthTest` (login/logout revoke/me/401s/settings admin), `ApiEndpointsTest` (all resources + search/filters/pagination meta/reports types), `AuditViewTest` (guards, roles, filters, show, deleted records) — **161 passing (652 assertions)**
+- [x] **GATE: pint ✓ · composer test (161 ✓) · build ✓ · smoke Chrome headless ✓ (12/12: web login, audit index renders + action badges + created filter, sidebar link, API login/me/dashboard/logout + revoked-token 401 + no-token 401) — STOP for review**
 
 ## Final — Full sweep
 - [ ] `composer test` full suite

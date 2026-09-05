@@ -21,6 +21,7 @@ return [
         ['name' => 'sales.index', 'label' => 'app.menu.sales', 'icon' => 'sales'],
         ['name' => 'inventory.index', 'label' => 'app.menu.inventory', 'icon' => 'inventory'],
         ['name' => 'reports.index', 'label' => 'app.menu.reports', 'icon' => 'reports'],
+        ['name' => 'audit.index', 'label' => 'app.menu.audit', 'icon' => 'audit'],
         ['name' => 'settings.index', 'label' => 'app.menu.settings', 'icon' => 'settings'],
     ],
 
@@ -38,6 +39,7 @@ return [
         'sales.index' => ['admin', 'vendedor', 'encargado'],
         'inventory.index' => ['admin', 'encargado'],
         'reports.index' => ['admin', 'encargado'],
+        'audit.index' => ['admin'],
         'settings.index' => ['admin'],
     ],
 

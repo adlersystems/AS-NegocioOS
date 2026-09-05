@@ -94,6 +94,14 @@ return [
         'subtotal' => 'Subtotal',
         'tax' => 'IVA',
         'status' => 'Estado',
+        'user' => 'Usuario',
+        'action' => 'Acción',
+        'model' => 'Modelo',
+        'record' => 'Registro',
+        'ip' => 'IP',
+        'details' => 'Detalles',
+        'attribute' => 'Atributo',
+        'user_agent' => 'User agent',
     ],
 
     'clients' => [
@@ -351,6 +359,34 @@ return [
         'default_language_desc' => 'Idioma base de la aplicación.',
         'language_es' => 'Español',
         'language_en' => 'English',
+    ],
+
+    'models' => [
+        'client' => 'Cliente',
+        'product' => 'Producto',
+        'sale' => 'Venta',
+        'sale_item' => 'Artículo de venta',
+        'inventory_movement' => 'Movimiento de inventario',
+        'setting' => 'Configuración',
+        'user' => 'Usuario',
+    ],
+
+    'audit' => [
+        'list_desc' => 'Consulta el historial de acciones de los usuarios sobre los datos.',
+        'detail_title' => 'Detalle de auditoría',
+        'detail_desc' => 'Detalles de la acción registrada sobre un registro.',
+        'all_models' => 'Todos los modelos',
+        'all_actions' => 'Todas las acciones',
+        'all_users' => 'Todos los usuarios',
+        'action_created' => 'Crear',
+        'action_updated' => 'Actualizar',
+        'action_deleted' => 'Eliminar',
+        'no_logs' => 'No hay registros de auditoría.',
+        'no_logs_desc' => 'Las acciones de los usuarios aparecerán aquí cuando modifiquen datos.',
+        'changes' => 'Cambios',
+        'old_value' => 'Valor anterior',
+        'new_value' => 'Valor nuevo',
+        'no_changes' => 'No se registraron cambios de atributos.',
     ],
 
 ];
