@@ -51,6 +51,9 @@
     if ($name !== '') {
         if (str_starts_with($name, 'heroicon-')) {
             $heroName = $name;
+        } elseif (str_starts_with($name, 'fluentui-')) {
+            // Render via the custom FluentUI set (config/blade-icons.php).
+            $heroName = $name;
         } elseif (isset($map[$name])) {
             $heroName = 'heroicon-o-'.$map[$name];
         } else {

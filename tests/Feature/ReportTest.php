@@ -222,4 +222,73 @@ class ReportTest extends TestCase
 
         $this->assertStringContainsString('window.showToast', $html);
     }
+
+    public function test_sales_report_shows_paid_and_pending_summary_and_status_column(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $client = Client::factory()->create(['name' => 'Cliente Estado']);
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 100,
+            'tax_amount' => 12,
+            'total' => 112,
+            'paid' => true,
+        ]);
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 50,
+            'tax_amount' => 0,
+            'total' => 50,
+            'paid' => false,
+        ]);
+
+        $this->actingAs(User::factory()->manager()->create())
+            ->get(route('reports.index', ['type' => 'sales']))
+            ->assertOk()
+            ->assertSee(__('app.reports.paid_sales'))
+            ->assertSee(__('app.reports.pending_sales'))
+            ->assertSee(__('app.sales.status_paid'))
+            ->assertSee(__('app.sales.status_unpaid'))
+            ->assertSee('Q 112.00')
+            ->assertSee('Q 50.00');
+    }
+
+    public function test_sales_report_filters_by_paid_status(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $client = Client::factory()->create(['name' => 'Cliente Filtro Pago']);
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'total' => 300,
+            'paid' => true,
+        ]);
+
+        $salePending = Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'total' => 90,
+            'paid' => false,
+        ]);
+
+        $this->actingAs(User::factory()->manager()->create())
+            ->get(route('reports.index', ['type' => 'sales', 'paid' => 'pending']))
+            ->assertOk()
+            ->assertSee($salePending->invoiceNumber())
+            ->assertSee('Q 90.00')
+            ->assertDontSee('Q 300.00');
+    }
+
+    public function test_sales_report_excel_includes_status_column(): void
+    {
+        $this->actingAs(User::factory()->manager()->create())
+            ->get(route('reports.export.excel', ['type' => 'sales']))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
 }

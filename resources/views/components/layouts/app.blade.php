@@ -106,6 +106,8 @@
                 @endforeach
             </nav>
 
+            {{-- App logout --}}
+            {{-- 
             <div class="border-t border-border px-3 py-3">
                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
@@ -115,12 +117,13 @@
                     </button>
                 </form>
             </div>
+             --}}
 
             {{-- Product identity (maker's brand: logo + name + slogan) --}}
-            <div class="border-t border-border px-5 py-4">
+            <div class="border-t border-border px-5 py-6">
                 <div class="flex items-center gap-3">
                     @if ($productLogoUrl)
-                        <img src="{{ $productLogoUrl }}" alt="{{ $productName }}" class="h-10 w-10 shrink-0 rounded-xl border border-border object-contain bg-surface-sunken p-0.5" :class="collapsed ? 'lg:hidden' : ''">
+                        <img src="{{ $productLogoUrl }}" alt="{{ $productName }}" class="h-9 w-9 shrink-0 rounded-xl border border-border object-contain bg-surface-sunken p-0.5" :class="collapsed ? 'lg:hidden' : ''">
                     @else
                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary lg:hidden">
                             <x-icon name="dashboard" class="h-4 w-4" />
@@ -157,11 +160,11 @@
                         :title="collapsed ? '{{ __('app.expand_sidebar') }}' : '{{ __('app.collapse_sidebar') }}'"
                         aria-label="{{ __('app.collapse_sidebar') }}"
                     >
-                        <template x-if="collapsed"><x-icon name="chevron-right" class="h-5 w-5" /></template>
-                        <template x-if="!collapsed"><x-icon name="chevron-left" class="h-5 w-5" /></template>
+                        <template x-if="collapsed"><x-icon name="arrow-right-end-on-rectangle" class="h-9 w-9 shrink-0 rounded-xl border border-border object-contain bg-surface-sunken p-1" /></template>
+                        <template x-if="!collapsed"><x-icon name="arrow-left-end-on-rectangle" class="h-9 w-9 shrink-0 rounded-xl border border-border object-contain bg-surface-sunken p-1" /></template>
                     </button>
 
-                    <h1 class="truncate text-base font-bold text-on-surface sm:text-lg">{{ $title }}</h1>
+                    <h1 class="truncate text-base font-bold text-on-surface sm:text-lg ml-4">{{ $title }}</h1>
 
                     <div class="ml-auto flex items-center gap-1.5">
 

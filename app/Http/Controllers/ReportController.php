@@ -36,6 +36,7 @@ class ReportController extends Controller
         $clientId = $request->string('client_id')?->toString();
         $productId = $request->string('product_id')?->toString();
         $sellerId = $request->string('seller_id')?->toString();
+        $paid = $request->string('paid')?->toString();
 
         return view('reports.index', [
             'activeType' => $type,
@@ -44,7 +45,8 @@ class ReportController extends Controller
             'clientId' => $clientId,
             'productId' => $productId,
             'sellerId' => $sellerId,
-            'type' => $this->reportData($type, $from, $to, $clientId, $productId, $sellerId),
+            'paid' => $paid,
+            'type' => $this->reportData($type, $from, $to, $clientId, $productId, $sellerId, $paid),
             'clients' => Client::orderBy('name')->get(['id', 'name']),
             'products' => Product::orderBy('name')->get(['id', 'name']),
             'sellers' => User::orderBy('name')->get(['id', 'name']),
@@ -88,7 +90,7 @@ class ReportController extends Controller
     }
 
     /**
-     * @return array{0: string, 1: mixed, 2: ?string, 3: ?string, 4: ?string, 5: ?string, 6: ?string}
+     * @return array{0: string, 1: mixed, 2: ?string, 3: ?string, 4: ?string, 5: ?string, 6: ?string, 7: ?string}
      */
     private function resolved(Request $request): array
     {
@@ -98,30 +100,33 @@ class ReportController extends Controller
         $clientId = $request->string('client_id')?->toString();
         $productId = $request->string('product_id')?->toString();
         $sellerId = $request->string('seller_id')?->toString();
+        $paid = $request->string('paid')?->toString();
 
-        return [$type, $this->reportData($type, $from, $to, $clientId, $productId, $sellerId), $from, $to, $clientId, $productId, $sellerId];
+        return [$type, $this->reportData($type, $from, $to, $clientId, $productId, $sellerId, $paid), $from, $to, $clientId, $productId, $sellerId, $paid];
     }
 
-    private function reportData(string $type, ?string $from = null, ?string $to = null, ?string $clientId = null, ?string $productId = null, ?string $sellerId = null): mixed
+    private function reportData(string $type, ?string $from = null, ?string $to = null, ?string $clientId = null, ?string $productId = null, ?string $sellerId = null, ?string $paid = null): mixed
     {
         return match ($type) {
             'inventory' => $this->inventoryReport($from, $to, $productId),
             'clients' => $this->clientsReport($from, $to, $clientId),
             'products' => $this->productsReport($from, $to, $productId),
-            default => $this->salesReport($from, $to, $clientId, $sellerId),
+            default => $this->salesReport($from, $to, $clientId, $sellerId, $paid),
         };
     }
 
     /**
-     * @return array{sales: Collection, totals: array<int, float>, count: int}
+     * @return array{sales: Collection, totals: array<int, float>, count: int, paidCount: int, unpaidCount: int, paidTotal: float, unpaidTotal: float}
      */
-    private function salesReport(?string $from, ?string $to, ?string $clientId, ?string $sellerId): array
+    private function salesReport(?string $from, ?string $to, ?string $clientId, ?string $sellerId, ?string $paid): array
     {
         $sales = Sale::query()
             ->with(['client:id,name,nit', 'seller:id,name'])
             ->betweenDates($from, $to)
             ->when($clientId, fn (Builder $query) => $query->where('client_id', $clientId))
             ->when($sellerId, fn (Builder $query) => $query->where('seller_id', $sellerId))
+            ->when($paid === 'paid', fn (Builder $query) => $query->paid())
+            ->when($paid === 'pending', fn (Builder $query) => $query->unpaid())
             ->latest('id')
             ->get();
 
@@ -133,6 +138,10 @@ class ReportController extends Controller
                 'total' => (float) $sales->sum('total'),
             ],
             'count' => $sales->count(),
+            'paidTotal' => (float) $sales->where('paid', true)->sum('total'),
+            'unpaidTotal' => (float) $sales->where('paid', false)->sum('total'),
+            'paidCount' => $sales->where('paid', true)->count(),
+            'unpaidCount' => $sales->where('paid', false)->count(),
         ];
     }
 
@@ -246,7 +255,7 @@ class ReportController extends Controller
                 $data->map(fn ($row) => [$row['sku'], $row['name'], $row['quantity'], (float) $row['revenue'], (float) $row['margin']])->all(),
             ],
             default => [
-                [__('app.labels.invoice_number'), __('app.labels.date'), __('app.labels.name'), __('app.labels.nit'), __('app.dashboard.seller'), __('app.labels.subtotal'), __('app.labels.tax'), __('app.labels.total')],
+                [__('app.labels.invoice_number'), __('app.labels.date'), __('app.labels.name'), __('app.labels.nit'), __('app.dashboard.seller'), __('app.labels.subtotal'), __('app.labels.tax'), __('app.labels.total'), __('app.labels.status')],
                 $data['sales']->map(fn (Sale $sale) => [
                     $sale->invoiceNumber(),
                     $sale->created_at->format('d/m/Y H:i'),
@@ -256,6 +265,7 @@ class ReportController extends Controller
                     (float) $sale->subtotal,
                     (float) $sale->tax_amount,
                     (float) $sale->total,
+                    $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid'),
                 ])->all(),
             ],
         };

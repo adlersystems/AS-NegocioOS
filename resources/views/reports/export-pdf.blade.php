@@ -146,6 +146,7 @@
                         <th class="num">{{ __('app.labels.subtotal') }}</th>
                         <th class="num">{{ __('app.labels.tax') }}</th>
                         <th class="num">{{ __('app.labels.total') }}</th>
+                        <th>{{ __('app.labels.status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -159,9 +160,10 @@
                             <td class="num">{{ \App\Models\Setting::formatMoney($sale->subtotal) }}</td>
                             <td class="num">{{ \App\Models\Setting::formatMoney($sale->tax_amount) }}</td>
                             <td class="num">{{ \App\Models\Setting::formatMoney($sale->total) }}</td>
+                            <td>{{ $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid') }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" style="text-align:center; color:#6b7280;">{{ __('app.reports.no_results') }}</td></tr>
+                        <tr><td colspan="9" style="text-align:center; color:#6b7280;">{{ __('app.reports.no_results') }}</td></tr>
                     @endforelse
                 </tbody>
                 @if ($sales->isNotEmpty())
@@ -171,6 +173,15 @@
                             <td class="num">{{ \App\Models\Setting::formatMoney($data['totals']['subtotal']) }}</td>
                             <td class="num">{{ \App\Models\Setting::formatMoney($data['totals']['tax']) }}</td>
                             <td class="num">{{ \App\Models\Setting::formatMoney($data['totals']['total']) }}</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td colspan="8" style="text-align:right;">{{ __('app.reports.paid_sales') }} ({{ $data['paidCount'] }})</td>
+                            <td class="num">{{ \App\Models\Setting::formatMoney($data['paidTotal']) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="8" style="text-align:right;">{{ __('app.reports.pending_sales') }} ({{ $data['unpaidCount'] }})</td>
+                            <td class="num">{{ \App\Models\Setting::formatMoney($data['unpaidTotal']) }}</td>
                         </tr>
                     </tfoot>
                 @endif

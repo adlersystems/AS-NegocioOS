@@ -15,6 +15,15 @@ return [
 
     'sets' => [
 
+        'fluentui' => [
+            'path' => 'resources/svg/fluentui',
+            'disk' => '',
+            'prefix' => 'fluentui',
+            'fallback' => '',
+            'class' => '',
+            'attributes' => [],
+        ],
+
         // 'default' => [
         //
         //     /*

@@ -7,7 +7,7 @@
             ['type' => 'clients', 'label' => __('app.reports.type_clients'), 'icon' => 'clients'],
             ['type' => 'products', 'label' => __('app.reports.type_products'), 'icon' => 'products'],
         ];
-        $hasFilters = $from || $to || $clientId || $productId || $sellerId;
+        $hasFilters = $from || $to || $clientId || $productId || $sellerId || $paid;
         $exportQuery = array_filter([
             'type' => $activeType,
             'from' => $from,
@@ -15,6 +15,7 @@
             'client_id' => $clientId,
             'product_id' => $productId,
             'seller_id' => $sellerId,
+            'paid' => $paid,
         ]);
     @endphp
 
@@ -77,6 +78,7 @@
 
             @if (in_array($activeType, ['sales']))
                 <x-select name="seller_id" :selected="$sellerId" :label="__('app.reports.filter_seller')" :options="$sellers->pluck('name', 'id')->prepend(__('app.labels.all'), '')->all()" />
+                <x-select name="paid" :selected="$paid" :label="__('app.reports.filter_status')" :options="['' => __('app.labels.all'), 'paid' => __('app.sales.status_paid'), 'pending' => __('app.sales.status_unpaid')]" />
             @endif
 
             <div class="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-4">
