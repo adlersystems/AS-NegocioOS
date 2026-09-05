@@ -25,16 +25,30 @@ class SaleTest extends TestCase
         $this->get(route('sales.edit', $sale))->assertRedirect(route('login'));
     }
 
-    public function test_sales_are_accessible_by_admin_and_seller_but_not_manager(): void
+    public function test_sales_index_is_accessible_to_managers(): void
     {
-        foreach ([User::ROLE_ADMIN, User::ROLE_SELLER] as $role) {
+        foreach ([User::ROLE_ADMIN, User::ROLE_SELLER, User::ROLE_MANAGER] as $role) {
             $this->actingAs(User::factory()->create(['role' => $role]))
                 ->get(route('sales.index'))
                 ->assertOk();
         }
+    }
 
-        $this->actingAs(User::factory()->manager()->create())
-            ->get(route('sales.index'))
+    public function test_managers_cannot_create_edit_or_delete_sales(): void
+    {
+        $sale = Sale::factory()->create();
+        $manager = User::factory()->manager()->create();
+
+        $this->actingAs($manager)
+            ->get(route('sales.create'))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->get(route('sales.edit', $sale))
+            ->assertForbidden();
+
+        $this->actingAs($manager)
+            ->delete(route('sales.destroy', $sale))
             ->assertForbidden();
     }
 
@@ -504,5 +518,93 @@ class SaleTest extends TestCase
             'auditable_type' => Sale::class,
             'auditable_id' => $sale->id,
         ]);
+    }
+
+    public function test_new_sales_are_unpaid_by_default(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $client = Client::factory()->create();
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 5]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ]);
+
+        $this->assertFalse(Sale::query()->firstOrFail()->isPaid());
+    }
+
+    public function test_admin_and_manager_can_toggle_the_paid_status(): void
+    {
+        $sale = Sale::factory()->create(['paid' => false]);
+
+        foreach ([User::ROLE_ADMIN, User::ROLE_MANAGER] as $role) {
+            $this->actingAs(User::factory()->create(['role' => $role]))
+                ->patch(route('sales.paid.toggle', $sale))
+                ->assertRedirect(route('sales.show', $sale));
+
+            $this->assertTrue($sale->fresh()->isPaid());
+
+            $this->actingAs(User::factory()->create(['role' => $role]))
+                ->patch(route('sales.paid.toggle', $sale))
+                ->assertRedirect(route('sales.show', $sale));
+
+            $this->assertFalse($sale->fresh()->isPaid());
+        }
+    }
+
+    public function test_sellers_cannot_toggle_the_paid_status(): void
+    {
+        $sale = Sale::factory()->create(['paid' => false]);
+
+        $this->actingAs(User::factory()->seller()->create())
+            ->patch(route('sales.paid.toggle', $sale))
+            ->assertForbidden();
+
+        $this->assertFalse($sale->fresh()->isPaid());
+    }
+
+    public function test_toggling_the_paid_status_is_audited(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $sale = Sale::factory()->create(['paid' => false]);
+
+        $this->actingAs($admin)->patch(route('sales.paid.toggle', $sale));
+
+        $this->assertDatabaseHas('audit_logs', [
+            'user_id' => $admin->id,
+            'action' => 'updated',
+            'auditable_type' => Sale::class,
+            'auditable_id' => $sale->id,
+        ]);
+    }
+
+    public function test_client_pending_balance_sums_only_unpaid_sales(): void
+    {
+        $client = Client::factory()->create();
+        $seller = User::factory()->seller()->create();
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 100,
+            'tax_amount' => 12,
+            'total' => 112,
+            'paid' => false,
+        ]);
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 50,
+            'tax_amount' => 0,
+            'total' => 50,
+            'paid' => true,
+        ]);
+
+        $this->assertSame(112.0, $client->pending_balance);
     }
 }

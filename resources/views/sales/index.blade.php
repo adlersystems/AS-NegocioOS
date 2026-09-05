@@ -101,9 +101,26 @@
 
                             <span class="text-xs text-on-surface-muted">{{ $sale->created_at->format('d/m/Y H:i') }}</span>
 
+                            <x-badge :color="$sale->isPaid() ? 'green' : 'yellow'">
+                                {{ $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid') }}
+                            </x-badge>
+
                             <p class="text-sm font-bold text-on-surface">{{ \App\Models\Setting::formatMoney($sale->total) }}</p>
 
                             <div class="flex items-center gap-1">
+                                @if (auth()->user() && in_array(auth()->user()->role, ['admin', 'encargado'], true))
+                                    <form method="POST" action="{{ route('sales.paid.toggle', $sale) }}" class="inline">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button
+                                            type="submit"
+                                            class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"
+                                            title="{{ $sale->isPaid() ? __('app.sales.mark_unpaid') : __('app.sales.mark_paid') }}"
+                                        >
+                                            <x-icon :name="$sale->isPaid() ? 'undo' : 'check'" class="h-4 w-4" />
+                                        </button>
+                                    </form>
+                                @endif
                                 <a
                                     href="{{ route('sales.show', $sale) }}"
                                     class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"
@@ -111,6 +128,7 @@
                                 >
                                     <x-icon name="eye" class="h-4 w-4" />
                                 </a>
+                                @if (auth()->user() && in_array(auth()->user()->role, ['admin', 'vendedor'], true))
                                 <a
                                     href="{{ route('sales.edit', $sale) }}"
                                     class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"
@@ -126,6 +144,7 @@
                                 >
                                     <x-icon name="trash" class="h-4 w-4" />
                                 </button>
+                                @endif
                             </div>
                         </div>
                     @endforeach

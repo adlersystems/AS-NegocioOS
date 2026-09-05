@@ -20,6 +20,7 @@ class ClientsExport implements FromCollection, WithHeadings, WithMapping
         return Client::query()
             ->withCount('sales')
             ->withSum('sales', 'total')
+            ->withSum(['sales as unpaid_total' => fn ($query) => $query->unpaid()], 'total')
             ->search($this->search)
             ->latest()
             ->get();

@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['client_id', 'seller_id', 'subtotal', 'tax_amount', 'total', 'notes'])]
+#[Fillable(['client_id', 'seller_id', 'subtotal', 'tax_amount', 'total', 'paid', 'notes'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -23,6 +23,7 @@ class Sale extends Model
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',
+            'paid' => 'boolean',
         ];
     }
 
@@ -39,6 +40,21 @@ class Sale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    public function isPaid(): bool
+    {
+        return (bool) $this->paid;
+    }
+
+    public function scopePaid(Builder $query): Builder
+    {
+        return $query->where('paid', true);
+    }
+
+    public function scopeUnpaid(Builder $query): Builder
+    {
+        return $query->where('paid', false);
     }
 
     public function scopeBetweenDates(Builder $query, ?string $from, ?string $to): Builder

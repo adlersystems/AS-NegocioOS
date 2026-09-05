@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateClientRequest;
 use App\Models\Client;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -22,6 +23,7 @@ class ClientController extends Controller
         $clients = Client::query()
             ->withCount('sales')
             ->withSum('sales', 'total')
+            ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total')
             ->search($request->string('search')?->toString())
             ->latest('id')
             ->paginate(10)
@@ -46,6 +48,8 @@ class ClientController extends Controller
 
     public function show(Client $client): View
     {
+        $client->loadSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total');
+
         $sales = $client->sales()
             ->with('seller:id,name')
             ->latest()
@@ -85,6 +89,7 @@ class ClientController extends Controller
         $clients = Client::query()
             ->withCount('sales')
             ->withSum('sales', 'total')
+            ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total')
             ->search($request->string('search')?->toString())
             ->latest('id')
             ->get();

@@ -93,6 +93,7 @@ return [
         'invoice_number' => 'Invoice no.',
         'subtotal' => 'Subtotal',
         'tax' => 'IVA',
+        'status' => 'Status',
     ],
 
     'clients' => [
@@ -234,6 +235,16 @@ return [
         'sale_reason' => 'Sale',
         'edit_reason' => 'Edited sale',
         'destroy_reason' => 'Cancelled sale',
+        'status_paid' => 'Paid',
+        'status_unpaid' => 'Pending',
+        'mark_paid' => 'Mark as paid',
+        'mark_unpaid' => 'Mark as pending',
+        'paid_desc' => 'This sale has been collected.',
+        'unpaid_desc' => 'This sale is pending payment.',
+        'toggle_paid_success' => 'Sale marked as paid.',
+        'toggle_unpaid_success' => 'Sale marked as pending.',
+        'toggle_paid_reason' => 'Sale marked as paid',
+        'toggle_unpaid_reason' => 'Sale marked as pending',
     ],
 
     'reports' => [

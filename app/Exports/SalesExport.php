@@ -46,6 +46,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping
             __('app.labels.subtotal'),
             __('app.labels.tax'),
             __('app.labels.total'),
+            __('app.labels.status'),
             __('app.labels.notes'),
         ];
     }
@@ -65,6 +66,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping
             (float) $sale->subtotal,
             (float) $sale->tax_amount,
             (float) $sale->total,
+            $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid'),
             $sale->notes,
         ];
     }

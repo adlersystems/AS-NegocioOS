@@ -33,7 +33,7 @@ class DashboardTest extends TestCase
     public function test_dashboard_renders_metrics_and_chart_markup(): void
     {
         $user = User::factory()->admin()->create();
-        $client = Client::factory()->create(['pending_balance' => 150.50]);
+        $client = Client::factory()->create();
         $product = Product::factory()->create([
             'name' => 'Producto Estrella',
             'stock' => 12,
@@ -49,6 +49,7 @@ class DashboardTest extends TestCase
             'subtotal' => 100,
             'tax_amount' => 12,
             'total' => 112,
+            'paid' => false,
         ]);
 
         SaleItem::create([
@@ -59,12 +60,22 @@ class DashboardTest extends TestCase
             'total' => 60,
         ]);
 
+        // A paid sale must NOT count toward accounts receivable.
+        Sale::create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 50,
+            'tax_amount' => 0,
+            'total' => 50,
+            'paid' => true,
+        ]);
+
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Producto Estrella', false)
-            ->assertSee('Q 150.50', false)
             ->assertSee('Q 112.00', false)
+            ->assertSee('Q 50.00', false)
             ->assertSee('chart-sales-monthly', false)
             ->assertSee('chart-revenue-trend', false)
             ->assertSee('chart-top-products', false)

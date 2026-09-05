@@ -40,12 +40,31 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('sales/export/pdf', [SaleController::class, 'exportListPdf'])->name('sales.export.pdf')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin,vendedor,encargado');
     Route::get('sales/export/excel', [SaleController::class, 'exportExcel'])->name('sales.export.excel')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin,vendedor,encargado');
     Route::get('sales/{sale}/pdf', [SaleController::class, 'exportPdf'])->name('sales.invoice.pdf')
+        ->middleware('role:admin,vendedor,encargado');
+    Route::patch('sales/{sale}/paid', [SaleController::class, 'togglePaid'])->name('sales.paid.toggle')
+        ->middleware('role:admin,encargado');
+    Route::resource('sales', SaleController::class)
+        ->middleware('role:admin,vendedor,encargado')
+        ->except(['index', 'show']);
+
+    Route::get('sales', [SaleController::class, 'index'])->name('sales.index')
+        ->middleware('role:admin,vendedor,encargado');
+    Route::get('sales/create', [SaleController::class, 'create'])->name('sales.create')
         ->middleware('role:admin,vendedor');
-    Route::resource('sales', SaleController::class)->middleware('role:admin,vendedor');
+    Route::post('sales', [SaleController::class, 'store'])->name('sales.store')
+        ->middleware('role:admin,vendedor');
+    Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show')
+        ->middleware('role:admin,vendedor,encargado');
+    Route::get('sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit')
+        ->middleware('role:admin,vendedor');
+    Route::put('sales/{sale}', [SaleController::class, 'update'])->name('sales.update')
+        ->middleware('role:admin,vendedor');
+    Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy')
+        ->middleware('role:admin,vendedor');
 
     Route::controller(InventoryController::class)
         ->middleware('role:admin,encargado')

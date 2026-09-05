@@ -37,7 +37,7 @@ class RoleAccessTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_manager_can_access_inventory_but_not_sales(): void
+    public function test_manager_can_access_inventory_and_read_sales(): void
     {
         $user = User::factory()->manager()->create();
 
@@ -47,6 +47,10 @@ class RoleAccessTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('sales.index'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('sales.create'))
             ->assertForbidden();
     }
 

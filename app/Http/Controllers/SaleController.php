@@ -113,6 +113,17 @@ class SaleController extends Controller
             ->with('success', __('app.flash.updated', ['entity' => __('app.sales.singular')]));
     }
 
+    public function togglePaid(Sale $sale): RedirectResponse
+    {
+        $sale->forceFill(['paid' => ! $sale->isPaid()])->save();
+
+        return redirect()
+            ->route('sales.show', $sale)
+            ->with('success', $sale->isPaid()
+                ? __('app.sales.toggle_paid_success')
+                : __('app.sales.toggle_unpaid_success'));
+    }
+
     public function destroy(Sale $sale): RedirectResponse
     {
         $invoice = $sale->invoiceNumber();

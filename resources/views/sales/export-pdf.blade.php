@@ -39,6 +39,7 @@
                 <th class="num">{{ __('app.labels.subtotal') }}</th>
                 <th class="num">{{ __('app.labels.tax') }}</th>
                 <th class="num">{{ __('app.labels.total') }}</th>
+                <th>{{ __('app.labels.status') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -52,18 +53,20 @@
                     <td class="num">{{ \App\Models\Setting::formatMoney($sale->subtotal) }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($sale->tax_amount) }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($sale->total) }}</td>
+                    <td>{{ $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid') }}</td>
                 </tr>
             @empty
-                <tr><td colspan="8" style="text-align:center; color:#6b7280;">{{ __('app.sales.no_results') }}</td></tr>
+                <tr><td colspan="9" style="text-align:center; color:#6b7280;">{{ __('app.sales.no_results') }}</td></tr>
             @endforelse
         </tbody>
         @if ($sales->isNotEmpty())
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="5" style="text-align:right;">{{ __('app.labels.total') }}</td>
+                    <td colspan="6" style="text-align:right;">{{ __('app.labels.total') }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($subtotal) }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($tax) }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($total) }}</td>
+                    <td></td>
                 </tr>
             </tfoot>
         @endif

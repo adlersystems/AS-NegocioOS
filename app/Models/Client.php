@@ -28,6 +28,15 @@ class Client extends Model
         return $this->hasMany(Sale::class);
     }
 
+    /**
+     * The amount this client owes, computed as the sum of their unpaid sales.
+     * Replaces the stored static value so receivables reflect real invoices.
+     */
+    public function getPendingBalanceAttribute(): float
+    {
+        return (float) ($this->unpaid_total ?? $this->sales()->unpaid()->sum('total'));
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         return $query->when($term, fn (Builder $q) => $q->where('name', 'like', "%{$term}%")

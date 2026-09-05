@@ -93,6 +93,7 @@ return [
         'invoice_number' => 'No. factura',
         'subtotal' => 'Subtotal',
         'tax' => 'IVA',
+        'status' => 'Estado',
     ],
 
     'clients' => [
@@ -234,6 +235,16 @@ return [
         'sale_reason' => 'Venta',
         'edit_reason' => 'Venta editada',
         'destroy_reason' => 'Venta anulada',
+        'status_paid' => 'Pagada',
+        'status_unpaid' => 'Pendiente',
+        'mark_paid' => 'Marcar como pagada',
+        'mark_unpaid' => 'Marcar como pendiente',
+        'paid_desc' => 'Esta venta ya fue cobrada.',
+        'unpaid_desc' => 'Esta venta está pendiente de cobro.',
+        'toggle_paid_success' => 'Venta marcada como pagada.',
+        'toggle_unpaid_success' => 'Venta marcada como pendiente.',
+        'toggle_paid_reason' => 'Venta marcada como pagada',
+        'toggle_unpaid_reason' => 'Venta marcada como pendiente',
     ],
 
     'reports' => [

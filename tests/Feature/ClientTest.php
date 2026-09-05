@@ -131,24 +131,32 @@ class ClientTest extends TestCase
     {
         $user = User::factory()->create();
         $seller = User::factory()->seller()->create();
-        $client = Client::factory()->create(['name' => 'Cliente Historial', 'pending_balance' => 150.5]);
+        $client = Client::factory()->create(['name' => 'Cliente Historial']);
 
         $this->actingAs($user);
 
-        foreach ([100.0, 50.0] as $total) {
-            Sale::factory()->create([
-                'client_id' => $client->id,
-                'seller_id' => $seller->id,
-                'subtotal' => $total,
-                'tax_amount' => 0,
-                'total' => $total,
-            ]);
-        }
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 100.0,
+            'tax_amount' => 0,
+            'total' => 100.0,
+            'paid' => false,
+        ]);
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 50.0,
+            'tax_amount' => 0,
+            'total' => 50.0,
+            'paid' => true,
+        ]);
 
         $this->get(route('clients.show', $client))
             ->assertOk()
             ->assertSee('Cliente Historial')
-            ->assertSee('Q 150.50')
+            ->assertSee('Q 100.00')
             ->assertSee('Q 150.00')
             ->assertSee('Historial de compras');
     }

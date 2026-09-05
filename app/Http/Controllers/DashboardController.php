@@ -72,7 +72,7 @@ class DashboardController extends Controller
                 'clients' => Client::count(),
                 'products' => Product::count(),
                 'sales' => Sale::count(),
-                'receivables' => Setting::formatMoney((float) Client::sum('pending_balance')),
+                'receivables' => Setting::formatMoney((float) Sale::unpaid()->whereNotNull('client_id')->sum('total')),
             ],
             'kpis' => [
                 'today_revenue' => Setting::formatMoney(Sale::whereDate('created_at', today())->sum('total')),

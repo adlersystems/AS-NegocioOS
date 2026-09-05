@@ -35,7 +35,7 @@ return [
     */
 
     'roles' => [
-        'sales.index' => ['admin', 'vendedor'],
+        'sales.index' => ['admin', 'vendedor', 'encargado'],
         'inventory.index' => ['admin', 'encargado'],
         'reports.index' => ['admin', 'encargado'],
         'settings.index' => ['admin'],

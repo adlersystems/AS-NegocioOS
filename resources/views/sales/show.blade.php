@@ -11,11 +11,25 @@
             <div class="flex items-center gap-2">
                 <x-button :href="route('sales.index')" variant="ghost" size="sm" icon="arrow-left">{{ __('app.actions.back') }}</x-button>
                 <h2 class="text-xl font-bold text-on-surface sm:text-2xl">{{ $sale->invoiceNumber() }}</h2>
+                <x-badge :color="$sale->isPaid() ? 'green' : 'yellow'">
+                    {{ $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid') }}
+                </x-badge>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                @if (in_array(auth()->user()->role, ['admin', 'encargado'], true))
+                    <form method="POST" action="{{ route('sales.paid.toggle', $sale) }}">
+                        @csrf
+                        @method('PATCH')
+                        <x-button :variant="$sale->isPaid() ? 'secondary' : 'primary'" size="sm" :icon="$sale->isPaid() ? 'undo' : 'check'" type="submit">
+                            {{ $sale->isPaid() ? __('app.sales.mark_unpaid') : __('app.sales.mark_paid') }}
+                        </x-button>
+                    </form>
+                @endif
                 <x-button :href="route('sales.invoice.pdf', $sale)" variant="secondary" size="sm" icon="download">{{ __('app.actions.export_pdf') }}</x-button>
-                <x-button :href="route('sales.edit', $sale)" variant="secondary" size="sm" icon="pencil">{{ __('app.actions.edit') }}</x-button>
-                <x-button type="button" variant="danger" size="sm" icon="trash" @click="deleteSale = @js(['name' => $sale->invoiceNumber(), 'url' => route('sales.destroy', $sale)])">{{ __('app.actions.delete') }}</x-button>
+                @if (in_array(auth()->user()->role, ['admin', 'vendedor'], true))
+                    <x-button :href="route('sales.edit', $sale)" variant="secondary" size="sm" icon="pencil">{{ __('app.actions.edit') }}</x-button>
+                    <x-button type="button" variant="danger" size="sm" icon="trash" @click="deleteSale = @js(['name' => $sale->invoiceNumber(), 'url' => route('sales.destroy', $sale)])">{{ __('app.actions.delete') }}</x-button>
+                @endif
             </div>
         </div>
 

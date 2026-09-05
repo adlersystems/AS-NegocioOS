@@ -27,6 +27,7 @@
         'search' => 'magnifying-glass',
         'filter' => 'funnel',
         'check' => 'check',
+        'undo' => 'arrow-uturn-left',
         'alert' => 'exclamation-triangle',
         'info' => 'information-circle',
         'trash' => 'trash',

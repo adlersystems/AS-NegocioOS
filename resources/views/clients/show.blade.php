@@ -77,12 +77,13 @@
                 <table class="w-full min-w-[640px] text-sm">
                     <thead>
                         <tr class="border-b border-border text-left text-xs font-semibold uppercase tracking-wide text-on-surface-muted">
-                            <th class="py-2 pr-4">{{ __('app.clients.invoice') }}</th>
+                             <th class="py-2 pr-4">{{ __('app.clients.invoice') }}</th>
                             <th class="py-2 pr-4">{{ __('app.labels.date') }}</th>
                             <th class="py-2 pr-4">{{ __('app.clients.seller') }}</th>
                             <th class="py-2 pr-4 text-right">{{ __('app.clients.subtotal') }}</th>
                             <th class="py-2 pr-4 text-right">{{ __('app.clients.tax') }}</th>
-                            <th class="py-2 text-right">{{ __('app.clients.total') }}</th>
+                            <th class="py-2 pr-4 text-right">{{ __('app.clients.total') }}</th>
+                            <th class="py-2 text-right">{{ __('app.labels.status') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-border">
@@ -93,7 +94,12 @@
                                 <td class="py-3 pr-4 text-on-surface">{{ $sale->seller?->name ?? '—' }}</td>
                                 <td class="py-3 pr-4 text-right text-on-surface">{{ \App\Models\Setting::formatMoney($sale->subtotal) }}</td>
                                 <td class="py-3 pr-4 text-right text-on-surface-muted">{{ \App\Models\Setting::formatMoney($sale->tax_amount) }}</td>
-                                <td class="py-3 text-right font-semibold text-on-surface">{{ \App\Models\Setting::formatMoney($sale->total) }}</td>
+                                <td class="py-3 pr-4 text-right font-semibold text-on-surface">{{ \App\Models\Setting::formatMoney($sale->total) }}</td>
+                                <td class="py-3 text-right">
+                                    <x-badge :color="$sale->isPaid() ? 'green' : 'yellow'">
+                                        {{ $sale->isPaid() ? __('app.sales.status_paid') : __('app.sales.status_unpaid') }}
+                                    </x-badge>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
