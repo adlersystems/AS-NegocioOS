@@ -48,15 +48,6 @@
                 {{ __('auth.login_button') }}
             </x-button>
         </form>
-
-        @if (Route::has('register'))
-            <p class="mt-6 text-center text-sm text-on-surface-muted">
-                {{ __('auth.no_account') }}
-                <a href="{{ route('register') }}" class="font-medium text-primary hover:text-primary-hover">
-                    {{ __('auth.register_link') }}
-                </a>
-            </p>
-        @endif
     </div>
 
 </x-layouts.auth>

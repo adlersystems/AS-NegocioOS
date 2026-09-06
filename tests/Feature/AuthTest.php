@@ -69,37 +69,8 @@ class AuthTest extends TestCase
             ->assertRedirect(route('dashboard'));
     }
 
-    public function test_registration_is_closed_after_first_user(): void
+    public function test_register_route_does_not_exist(): void
     {
-        User::factory()->create();
-
-        $this->get(route('register'))
-            ->assertRedirect(route('login'));
-
-        $this->post(route('register'), [
-            'name' => 'Intruder',
-            'email' => 'intruder@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ])->assertRedirect(route('login'));
-
-        $this->assertSame(1, User::count());
-        $this->assertGuest();
-    }
-
-    public function test_first_user_can_register_as_admin(): void
-    {
-        $this->post(route('register'), [
-            'name' => 'Primer Administrador',
-            'email' => 'admin@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ])->assertRedirect(route('dashboard'));
-
-        $user = User::first();
-
-        $this->assertNotNull($user);
-        $this->assertSame(User::ROLE_ADMIN, $user->role);
-        $this->assertAuthenticatedAs($user);
+        $this->get('register')->assertNotFound();
     }
 }
