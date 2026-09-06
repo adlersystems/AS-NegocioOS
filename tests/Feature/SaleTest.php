@@ -52,6 +52,30 @@ class SaleTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_sellers_can_create_but_not_edit_or_delete_sales(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 5]);
+        $sale = Sale::factory()->create(['seller_id' => $seller->id]);
+
+        $this->actingAs($seller)->get(route('sales.create'))->assertOk();
+
+        $this->actingAs($seller)
+            ->post(route('sales.store'), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ])->assertRedirect();
+
+        $this->actingAs($seller)->get(route('sales.edit', $sale))->assertForbidden();
+        $this->actingAs($seller)->put(route('sales.update', $sale), [
+            'seller_id' => $seller->id,
+            'items' => [],
+        ])->assertForbidden();
+        $this->actingAs($seller)->delete(route('sales.destroy', $sale))->assertForbidden();
+    }
+
     public function test_index_renders_sales_with_invoice_client_seller_and_total(): void
     {
         $seller = User::factory()->seller()->create(['name' => 'Vendedor Principal']);
@@ -311,8 +335,9 @@ class SaleTest extends TestCase
         ]);
 
         $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($seller)->put(route('sales.update', $sale), [
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
             'seller_id' => $seller->id,
             'items' => [
                 ['product_id' => $p1->id, 'quantity' => 4],
@@ -359,8 +384,9 @@ class SaleTest extends TestCase
         ]);
 
         $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($seller)->put(route('sales.update', $sale), [
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
             'seller_id' => $seller->id,
             'items' => [
                 ['product_id' => $p1->id, 'quantity' => 1],
@@ -398,8 +424,9 @@ class SaleTest extends TestCase
         ]);
 
         $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($seller)
+        $this->actingAs($admin)
             ->put(route('sales.update', $sale), [
                 'seller_id' => $seller->id,
                 'items' => [
@@ -424,8 +451,9 @@ class SaleTest extends TestCase
         ]);
 
         $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
 
-        $this->actingAs($seller)
+        $this->actingAs($admin)
             ->delete(route('sales.destroy', $sale))
             ->assertRedirect(route('sales.index'));
 

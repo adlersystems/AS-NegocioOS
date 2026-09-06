@@ -26,7 +26,7 @@
                     </form>
                 @endif
                 <x-button :href="route('sales.invoice.pdf', $sale)" variant="secondary" size="sm" icon="download">{{ __('app.actions.export_pdf') }}</x-button>
-                @if (in_array(auth()->user()->role, ['admin', 'vendedor'], true))
+                @if (auth()->user()->canWriteSales())
                     <x-button :href="route('sales.edit', $sale)" variant="secondary" size="sm" icon="pencil">{{ __('app.actions.edit') }}</x-button>
                     <x-button type="button" variant="danger" size="sm" icon="trash" @click="deleteSale = @js(['name' => $sale->invoiceNumber(), 'url' => route('sales.destroy', $sale)])">{{ __('app.actions.delete') }}</x-button>
                 @endif

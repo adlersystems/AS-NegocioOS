@@ -85,6 +85,8 @@ class SaleController extends Controller
 
     public function edit(Sale $sale): View
     {
+        abort_unless(auth()->user()->canWriteSales(), 403);
+
         $sale->load('items');
 
         return view('sales.form', [
@@ -98,6 +100,8 @@ class SaleController extends Controller
 
     public function update(UpdateSaleRequest $request, Sale $sale): RedirectResponse
     {
+        abort_unless(auth()->user()->canWriteSales(), 403);
+
         $data = $request->validated();
 
         $this->reconcileItems($sale, $data['items']);
@@ -126,6 +130,8 @@ class SaleController extends Controller
 
     public function destroy(Sale $sale): RedirectResponse
     {
+        abort_unless(auth()->user()->canWriteSales(), 403);
+
         $invoice = $sale->invoiceNumber();
 
         foreach ($sale->items as $item) {

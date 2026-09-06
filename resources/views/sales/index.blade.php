@@ -22,7 +22,9 @@
                 <h2 class="text-xl font-bold text-on-surface sm:text-2xl">{{ __('app.menu.sales') }}</h2>
                 <p class="text-sm text-on-surface-muted">{{ __('app.sales.list_desc') }}</p>
             </div>
-            <x-button :href="route('sales.create')" icon="plus">{{ __('app.sales.new_sale') }}</x-button>
+            @if (auth()->user()?->canSell())
+                <x-button :href="route('sales.create')" icon="plus">{{ __('app.sales.new_sale') }}</x-button>
+            @endif
         </div>
 
         <div class="divider">&nbsp;</div>
@@ -128,7 +130,7 @@
                                 >
                                     <x-icon name="eye" class="h-4 w-4" />
                                 </a>
-                                @if (auth()->user() && in_array(auth()->user()->role, ['admin', 'vendedor'], true))
+                                @if (auth()->user() && auth()->user()->canWriteSales())
                                 <a
                                     href="{{ route('sales.edit', $sale) }}"
                                     class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"

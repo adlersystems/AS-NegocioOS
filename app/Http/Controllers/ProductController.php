@@ -41,11 +41,15 @@ class ProductController extends Controller
 
     public function create(): View
     {
+        abort_unless(auth()->user()->canWriteProducts(), 403);
+
         return view('products.form', ['product' => new Product]);
     }
 
     public function store(StoreProductRequest $request): RedirectResponse
     {
+        abort_unless(auth()->user()->canWriteProducts(), 403);
+
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
 
@@ -84,11 +88,15 @@ class ProductController extends Controller
 
     public function edit(Product $product): View
     {
+        abort_unless(auth()->user()->canWriteProducts(), 403);
+
         return view('products.form', ['product' => $product]);
     }
 
     public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
+        abort_unless(auth()->user()->canWriteProducts(), 403);
+
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
 
@@ -106,6 +114,8 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
+        abort_unless(auth()->user()->canWriteProducts(), 403);
+
         $product->delete();
 
         return redirect()

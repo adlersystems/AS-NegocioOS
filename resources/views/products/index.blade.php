@@ -4,6 +4,7 @@
         $search = request('search');
         $status = request('status');
         $stock = request('stock');
+        $canWriteProducts = auth()->user()?->canWriteProducts();
     @endphp
 
     <div x-data="{ deleteProduct: null }">
@@ -14,7 +15,9 @@
                 <h2 class="text-xl font-bold text-on-surface sm:text-2xl">{{ __('app.menu.products') }}</h2>
                 <p class="text-sm text-on-surface-muted">{{ __('app.products.list_desc') }}</p>
             </div>
-            <x-button :href="route('products.create')" icon="plus">{{ __('app.products.new_product') }}</x-button>
+            @if ($canWriteProducts)
+                <x-button :href="route('products.create')" icon="plus">{{ __('app.products.new_product') }}</x-button>
+            @endif
         </div>
 
         <div class="divider">&nbsp;</div>
@@ -113,6 +116,7 @@
                                 >
                                     <x-icon name="eye" class="h-4 w-4" />
                                 </a>
+                                @if ($canWriteProducts)
                                 <a
                                     href="{{ route('products.edit', $product) }}"
                                     class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"
@@ -128,6 +132,7 @@
                                 >
                                     <x-icon name="trash" class="h-4 w-4" />
                                 </button>
+                                @endif
                             </div>
                         </div>
                     @endforeach

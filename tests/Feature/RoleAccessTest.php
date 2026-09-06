@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
+use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -80,8 +82,37 @@ class RoleAccessTest extends TestCase
             ->assertOk();
 
         $this->actingAs($user)
+            ->get(route('products.create'))
+            ->assertForbidden();
+
+        $this->actingAs($user)
             ->get(route('sales.index'))
             ->assertOk();
+    }
+
+    public function test_manager_can_write_products_but_not_edit_sales(): void
+    {
+        $user = User::factory()->manager()->create();
+        $product = Product::factory()->create(['name' => 'Gestionable']);
+
+        $this->actingAs($user)
+            ->get(route('products.create'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->put(route('products.update', $product), [
+                'name' => 'Gestionable',
+                'sku' => $product->sku,
+                'stock' => $product->stock,
+                'min_stock' => $product->min_stock,
+                'production_cost' => $product->production_cost,
+                'sale_price' => $product->sale_price,
+            ])
+            ->assertRedirect(route('products.show', $product));
+
+        $this->actingAs($user)
+            ->get(route('sales.edit', Sale::factory()->create()))
+            ->assertForbidden();
     }
 
     public function test_unauthenticated_user_cannot_access_protected_routes(): void

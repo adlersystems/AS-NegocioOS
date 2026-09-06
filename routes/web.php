@@ -48,9 +48,6 @@ Route::middleware('auth')->group(function () {
         ->middleware('role:admin,vendedor,encargado');
     Route::patch('sales/{sale}/paid', [SaleController::class, 'togglePaid'])->name('sales.paid.toggle')
         ->middleware('role:admin,encargado');
-    Route::resource('sales', SaleController::class)
-        ->middleware('role:admin,vendedor,encargado')
-        ->except(['index', 'show']);
 
     Route::get('sales', [SaleController::class, 'index'])->name('sales.index')
         ->middleware('role:admin,vendedor,encargado');
@@ -61,11 +58,11 @@ Route::middleware('auth')->group(function () {
     Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show')
         ->middleware('role:admin,vendedor,encargado');
     Route::get('sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin');
     Route::put('sales/{sale}', [SaleController::class, 'update'])->name('sales.update')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin');
     Route::delete('sales/{sale}', [SaleController::class, 'destroy'])->name('sales.destroy')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin');
 
     Route::controller(InventoryController::class)
         ->middleware('role:admin,encargado')
@@ -101,5 +98,18 @@ Route::middleware('auth')->group(function () {
     Route::get('clients/export/excel', [ClientController::class, 'exportExcel'])->name('clients.export.excel');
     Route::resource('clients', ClientController::class);
 
-    Route::resource('products', ProductController::class);
+    Route::get('products', [ProductController::class, 'index'])->name('products.index');
+
+    Route::middleware('role:admin,encargado')->group(function () {
+        Route::get('products/create', [ProductController::class, 'create'])->name('products.create');
+        Route::post('products', [ProductController::class, 'store'])->name('products.store');
+    });
+
+    Route::get('products/{product}', [ProductController::class, 'show'])->name('products.show');
+
+    Route::middleware('role:admin,encargado')->group(function () {
+        Route::get('products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+        Route::put('products/{product}', [ProductController::class, 'update'])->name('products.update');
+        Route::delete('products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    });
 });

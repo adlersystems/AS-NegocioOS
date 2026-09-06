@@ -128,7 +128,7 @@ class ProductTest extends TestCase
 
     public function test_store_creates_a_product(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $response = $this->actingAs($user)->post(route('products.store'), [
             'name' => 'Pan Integral',
@@ -153,7 +153,7 @@ class ProductTest extends TestCase
 
     public function test_store_defaults_is_active_to_false_when_unchecked(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)->post(route('products.store'), [
             'name' => 'Producto Inactivo',
@@ -170,7 +170,7 @@ class ProductTest extends TestCase
 
     public function test_store_validates_required_fields(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)
             ->post(route('products.store'), ['name' => '', 'sale_price' => '', 'stock' => ''])
@@ -181,7 +181,7 @@ class ProductTest extends TestCase
 
     public function test_store_rejects_negative_stock(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)
             ->post(route('products.store'), [
@@ -196,7 +196,7 @@ class ProductTest extends TestCase
 
     public function test_store_rejects_duplicate_sku(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Product::factory()->create(['sku' => 'DUP-001']);
 
         $this->actingAs($user)
@@ -213,7 +213,7 @@ class ProductTest extends TestCase
 
     public function test_update_edits_the_product_and_ignores_its_own_sku(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create(['name' => 'Original', 'sku' => 'SKU-X']);
 
         $this->actingAs($user)
@@ -237,7 +237,7 @@ class ProductTest extends TestCase
 
     public function test_update_redirects_to_a_page_rendering_the_success_toast(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create(['name' => 'Antes', 'sku' => 'SKU-PROBE']);
 
         $this->actingAs($user)
@@ -268,7 +268,7 @@ class ProductTest extends TestCase
 
     public function test_destroy_deletes_the_product(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create();
 
         $this->actingAs($user)
@@ -281,7 +281,7 @@ class ProductTest extends TestCase
 
     public function test_destroy_soft_deletes_a_product_with_sale_history(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create(['name' => 'Producto Con Historial']);
 
         SaleItem::factory()->create([
@@ -304,7 +304,7 @@ class ProductTest extends TestCase
 
     public function test_archived_products_still_appear_when_editing_a_sale_that_uses_them(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $seller = User::factory()->seller()->create();
         $product = Product::factory()->create(['name' => 'Archivado En Venta']);
 
@@ -363,7 +363,7 @@ class ProductTest extends TestCase
 
     public function test_store_logs_initial_stock_movement(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)->post(route('products.store'), [
             'name' => 'Con Stock Inicial',
@@ -386,7 +386,7 @@ class ProductTest extends TestCase
 
     public function test_store_does_not_log_stock_movement_when_zero(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)->post(route('products.store'), [
             'name' => 'Sin Stock',
@@ -401,7 +401,7 @@ class ProductTest extends TestCase
 
     public function test_update_logs_stock_adjustment_when_incremented(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create(['name' => 'Ajustable', 'sku' => 'AJU-1', 'stock' => 10]);
 
         $this->actingAs($user)->put(route('products.update', $product), [
@@ -424,7 +424,7 @@ class ProductTest extends TestCase
 
     public function test_update_logs_stock_adjustment_when_decremented(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create(['name' => 'Ajuste Salida', 'sku' => 'AJU-2', 'stock' => 20]);
 
         $this->actingAs($user)->put(route('products.update', $product), [
@@ -447,7 +447,7 @@ class ProductTest extends TestCase
 
     public function test_update_does_not_log_movement_when_stock_is_unchanged(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create(['name' => 'Sin Ajuste', 'sku' => 'AJU-3', 'stock' => 7]);
 
         $this->actingAs($user)->put(route('products.update', $product), [
@@ -464,7 +464,7 @@ class ProductTest extends TestCase
 
     public function test_creating_a_product_via_http_is_audited(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
 
         $this->actingAs($user)->post(route('products.store'), [
             'name' => 'Auditado',
@@ -481,5 +481,37 @@ class ProductTest extends TestCase
         ]);
 
         $this->assertSame(2, AuditLog::query()->where('user_id', $user->id)->count());
+    }
+
+    public function test_only_admin_and_manager_can_write_products(): void
+    {
+        $product = Product::factory()->create(['name' => 'Protegido', 'sku' => 'PROT-1', 'stock' => 5]);
+
+        foreach ([User::ROLE_ADMIN, User::ROLE_MANAGER] as $role) {
+            $writer = User::factory()->create(['role' => $role]);
+            $this->actingAs($writer)->get(route('products.create'))->assertOk();
+            $this->actingAs($writer)->get(route('products.edit', $product))->assertOk();
+            $this->actingAs($writer)->put(route('products.update', $product), [
+                'name' => 'Protegido',
+                'sku' => 'PROT-1',
+                'stock' => 5,
+                'min_stock' => 2,
+                'production_cost' => 1,
+                'sale_price' => 2,
+            ])->assertRedirect(route('products.show', $product));
+        }
+
+        $seller = User::factory()->seller()->create();
+        $this->actingAs($seller)->get(route('products.create'))->assertForbidden();
+        $this->actingAs($seller)->get(route('products.edit', $product))->assertForbidden();
+        $this->actingAs($seller)->put(route('products.update', $product), [
+            'name' => 'Protegido',
+            'sku' => 'PROT-1',
+            'stock' => 5,
+            'min_stock' => 2,
+            'production_cost' => 1,
+            'sale_price' => 2,
+        ])->assertForbidden();
+        $this->actingAs($seller)->delete(route('products.destroy', $product))->assertForbidden();
     }
 }

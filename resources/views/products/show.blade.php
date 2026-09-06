@@ -9,7 +9,9 @@
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <x-button :href="route('products.index')" variant="ghost" size="sm" icon="arrow-left">{{ __('app.actions.back') }}</x-button>
-        <x-button :href="route('products.edit', $product)" variant="secondary" icon="pencil">{{ __('app.actions.edit') }}</x-button>
+        @if (auth()->user()?->canWriteProducts())
+            <x-button :href="route('products.edit', $product)" variant="secondary" icon="pencil">{{ __('app.actions.edit') }}</x-button>
+        @endif
     </div>
 
     {{-- Status alerts --}}

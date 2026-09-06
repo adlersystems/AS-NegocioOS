@@ -73,4 +73,36 @@ class User extends Authenticatable
     {
         return $this->role === self::ROLE_MANAGER;
     }
+
+    /**
+     * Roles allowed to create, edit or delete products.
+     */
+    public function canWriteProducts(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
+    }
+
+    /**
+     * Roles allowed to edit, update or delete existing sales.
+     */
+    public function canWriteSales(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Roles allowed to create a new sale.
+     */
+    public function canSell(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_SELLER], true);
+    }
+
+    /**
+     * Roles allowed to toggle the paid status of a sale.
+     */
+    public function canTogglePaid(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
+    }
 }
