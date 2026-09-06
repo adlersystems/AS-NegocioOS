@@ -27,6 +27,7 @@ return [
         'reports' => 'Reports',
         'settings' => 'Settings',
         'audit' => 'Audit trail',
+        'users' => 'Users',
     ],
 
     'actions' => [
@@ -135,6 +136,31 @@ return [
         'confirm_delete_desc' => 'The record of',
         'export_title' => 'Client list',
         'exported_at' => 'Generated on :date by :user',
+    ],
+
+    'users' => [
+        'singular' => 'User',
+        'list_desc' => 'Manage system users and their roles.',
+        'new_user' => 'New user',
+        'edit_user' => 'Edit user',
+        'search_hint' => 'Search by name or email…',
+        'no_results' => 'No users found.',
+        'no_results_desc' => 'Try a different search.',
+        'no_users' => 'No users registered yet.',
+        'no_users_desc' => 'Create the first user to get started.',
+        'role' => 'Role',
+        'language' => 'Language',
+        'language_es' => 'Spanish',
+        'language_en' => 'English',
+        'password' => 'Password',
+        'password_hint' => 'Leave blank to keep the current one.',
+        'you' => 'You',
+        'move_own_account' => 'You cannot delete your own account.',
+        'last_admin' => 'You cannot delete the last administrator.',
+        'form_title' => 'User information',
+        'form_desc' => 'Fields marked with * are required.',
+        'confirm_delete_title' => 'Delete user',
+        'confirm_delete_desc' => 'The access of',
     ],
 
     'products' => [

@@ -22,6 +22,7 @@ return [
         ['name' => 'inventory.index', 'label' => 'app.menu.inventory', 'icon' => 'inventory'],
         ['name' => 'reports.index', 'label' => 'app.menu.reports', 'icon' => 'reports'],
         ['name' => 'audit.index', 'label' => 'app.menu.audit', 'icon' => 'audit'],
+        ['name' => 'users.index', 'label' => 'app.menu.users', 'icon' => 'users'],
         ['name' => 'settings.index', 'label' => 'app.menu.settings', 'icon' => 'settings'],
     ],
 
@@ -40,6 +41,7 @@ return [
         'inventory.index' => ['admin', 'encargado'],
         'reports.index' => ['admin', 'encargado'],
         'audit.index' => ['admin'],
+        'users.index' => ['admin'],
         'settings.index' => ['admin'],
     ],
 

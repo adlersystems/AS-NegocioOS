@@ -27,6 +27,7 @@ return [
         'reports' => 'Reportes',
         'settings' => 'Configuración',
         'audit' => 'Auditoría',
+        'users' => 'Usuarios',
     ],
 
     'actions' => [
@@ -135,6 +136,31 @@ return [
         'confirm_delete_desc' => 'Se eliminará el registro de',
         'export_title' => 'Listado de clientes',
         'exported_at' => 'Generado el :date por :user',
+    ],
+
+    'users' => [
+        'singular' => 'Usuario',
+        'list_desc' => 'Administra los usuarios del sistema y sus roles.',
+        'new_user' => 'Nuevo usuario',
+        'edit_user' => 'Editar usuario',
+        'search_hint' => 'Buscar por nombre o correo…',
+        'no_results' => 'No se encontraron usuarios.',
+        'no_results_desc' => 'Prueba con otra búsqueda.',
+        'no_users' => 'Aún no hay usuarios registrados.',
+        'no_users_desc' => 'Crea el primer usuario para comenzar.',
+        'role' => 'Rol',
+        'language' => 'Idioma',
+        'language_es' => 'Español',
+        'language_en' => 'English',
+        'password' => 'Contraseña',
+        'password_hint' => 'Déjalo en blanco para conservar la actual.',
+        'you' => 'Tú',
+        'move_own_account' => 'No puedes eliminar tu propia cuenta.',
+        'last_admin' => 'No puedes eliminar el último administrador.',
+        'form_title' => 'Información del usuario',
+        'form_desc' => 'Los campos marcados con * son obligatorios.',
+        'confirm_delete_title' => 'Eliminar usuario',
+        'confirm_delete_desc' => 'Se eliminará el acceso de',
     ],
 
     'products' => [
