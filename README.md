@@ -1,58 +1,120 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+    <h1 align="center">AS-NegocioOS</h1>
+    <p align="center">Sistema de gestión comercial (mini-ERP) construido con Laravel 13.</p>
 </p>
 
-## About Laravel
+AS-NegocioOS es un sistema privado (no público) de gestión comercial: clientes, productos,
+ventas (facturas + PDF/Excel), inventario, reportes, configuración, auditoría y una API con
+Sanctum. El acceso se controla por roles (`admin`, `vendedor`, `encargado`).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> **Registro público:** este proyecto **no** incluye auto-registro de usuarios. El primer
+> administrador se crea con el seeder y los usuarios se gestionan desde el panel (módulo
+> **Usuarios**, solo admin). Existe la rama `with-registration` que conserva el primer-usuario
+> se registra como administrador, si se prefiere un arranque sin seeder.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.2+ (probado con 8.5)
+- Composer 2
+- Node 20+ (probado con 24)
+- SQLite (por defecto) u otro driver soportado por Laravel
 
-## Learning Laravel
+## Instalación
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```powershell
+# 1. Clonar e instalar dependencias
+git clone <repo> AS-NegocioOS
+cd AS-NegocioOS
+composer install
+npm install
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+# 2. Configurar entorno
+Copy-Item .env.example .env
+# (opcional) ajusta APP_NAME, DB_*, MAIL_* en .env
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+# 3. Generar clave y base de datos
+php artisan key:generate
+New-Item database\database.sqlite -ItemType File -Force
 
-## Agentic Development
+# 4. Migrar + sembrar DB (crea el admin y datos de ejemplo)
+php artisan migrate:fresh --seed
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+# 5. Compilar assets frontend
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+> Para login OAuth/redes sociales no es necesario configurar credenciales. Los correos de
+> restablecimiento de contraseña requieren configurar `MAIL_*` (por defecto se registran en log).
 
-## Contributing
+## Usuarios de ejemplo (seeder)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Rol        | Correo               | Contraseña |
+|------------|----------------------|------------|
+| Admin      | `admin@as-negocios.com` | `password` |
+| Vendedora  | `ventas@as-negocios.com`| `password` |
+| Encargado  | `bodega@as-negocios.com`| `password` |
 
-## Code of Conduct
+## Ejecución (desarrollo)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Dos terminales:
 
-## Security Vulnerabilities
+```powershell
+# Terminal 1 — servidor web
+php artisan serve
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Terminal 2 — Vite dev (hot reload)
+npm run dev
+```
 
-## License
+Abre `http://127.0.0.1:8000` (o `npm run dev` + la URL que indican los logs).
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Tests
+
+La base de tests es SQLite en memoria (ver `phpunit.xml`).
+
+```powershell
+composer test        # php artisan config:clear + php artisan test
+vendor\bin\pint      # lint/format (preset Laravel)
+npm run build        # compila assets (se usan en producción)
+```
+
+Suite completa: **173 tests / 700 assertions** (auth, dashboard, roles, clientes, productos,
+ventas, inventario, reportes, configuración, API + audit, usuarios).
+
+## Estructura de roles
+
+| Capacidad | admin | vendedor | encargado |
+|-----------|:-----:|:--------:|:---------:|
+| Clientes (CRUD) | ✔ | ✔ | ✔ |
+| Productos (leer) | ✔ | ✔ | ✔ |
+| Productos (crear/editar/borrar) | ✔ | ✘ | ✔ |
+| Ventas (crear) | ✔ | ✔ | ✘ |
+| Ventas (editar/anular) | ✔ | ✘ | ✘ |
+| Inventario | ✔ | ✘ | ✔ |
+| Reportes | ✔ | ✘ | ✔ |
+| Configuración | ✔ | ✘ | ✘ |
+| Auditoría | ✔ | ✘ | ✘ |
+| Usuarios (CRUD) | ✔ | ✘ | ✘ |
+
+## Funcionalidades principales
+
+- **Dashboard**: KPIs, gráficos (Chart.js), alertas de inventario, cliente top, últimos ingresos.
+- **Clientes**: CRUD con historial de compras y saldo pendiente; búsqueda y paginación; PDF/Excel.
+- **Productos**: CRUD con SKU, stock, control de caducidad; búsqueda/filtros; movimientos.
+- **Ventas**: facturación con ítems dinámicos, IVA configurable, control de stock; factura PDF,
+  lista PDF/Excel; conciliación de stock al editar/anular.
+- **Inventario**: entradas/salidas con ajuste automático de stock; PDF/Excel.
+- **Reportes**: ventas/clientes/productos/inventario con filtros; PDF/Excel.
+- **Configuración**: datos de empresa, logotipo, moneda, IVA, idioma por defecto.
+- **Auditoría**: bitácora de altas/bajas/cambios con diff (solo admin).
+- **API REST** (Sanctum): auth token, dashboard, clientes, productos, ventas, inventario,
+  reportes, configuración.
+
+## Idiomas
+
+Soporta español e inglés. El idioma se puede cambiar con el selector del encabezado o desde
+la configuración de la empresa (idioma por defecto).
+
+## Licencia
+
+Este proyecto es de uso interno.

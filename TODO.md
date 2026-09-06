@@ -8,6 +8,9 @@
 
 > We STOP after every module for review. Nothing moves forward until green.
 
+> Branch layout: `main` = no self-registration (admin creates users; pure seeder bootstrap).
+> `with-registration` = keeps first-user registration. Both share the users-CRUD baseline (`776fdfd`).
+
 ---
 
 ## Milestone A — Foundation (Phases 0–3) ✅ DONE
@@ -122,8 +125,16 @@
 - [x] Tests: `ApiAuthTest` (login/logout revoke/me/401s/settings admin), `ApiEndpointsTest` (all resources + search/filters/pagination meta/reports types), `AuditViewTest` (guards, roles, filters, show, deleted records) — **161 passing (652 assertions)**
 - [x] **GATE: pint ✓ · composer test (161 ✓) · build ✓ · smoke Chrome headless ✓ (12/12: web login, audit index renders + action badges + created filter, sidebar link, API login/me/dashboard/logout + revoked-token 401 + no-token 401) — STOP for review**
 
-## Final — Full sweep
-- [ ] `composer test` full suite
-- [ ] `npm run build`
-- [ ] Final smoke test of every module + role switching
-- [ ] Update README with setup/run instructions
+## Milestone J — Roles + Usuarios (Access Control) ✅ DONE
+- [x] Role matrix helper methods on `User` (`canWriteProducts`, `canWriteSales`, `canSell`, `canTogglePaid`) — products read = all, write = admin+encargado; sales create/store = admin+vendedor, edit/update/destroy = admin only, `sales.paid.toggle` = admin+encargado; users = admin only
+- [x] Explicit sales routes (dropped shadowing `Route::resource(...)->except(['index','show'])`); products split into read + `role:admin,encargado` write group; `abort_unless` guards in `SaleController::edit/update/destroy` and `ProductController::create/store/edit/update/destroy`; action buttons gated in products/sales index/show views
+- [x] Tests updated (ProductTest/SaleTest act as admin; new role-matrix asserts) — **164 passing (712 assertions)**; **GATE: pint ✓ · composer test (164 ✓) · build ✓ · smoke Chrome headless ✓ (20/20)** — committed `a969d3b`
+- [x] **Users CRUD (admin-only)**: `UserController` + `Store/UpdateUserRequest` (password min 8, role enum, unique email ignore), admin-only route group, `users/index` + `users/form` views (avatar initials, role badge, "Tú" marker, self-delete hidden, delete modal, search, pagination), sidebar `users.index` (admin only), i18n `menu.users` + `users.*`; `UserTest` (10 tests)
+- [x] **GATE: pint ✓ · composer test (174 ✓ / 712 ✓) · build ✓ · smoke Chrome headless ✓ (9/9: seller no menu + 403, admin menu/index/create form, POST 200, redirect, listed)** — committed `776fdfd`
+- [x] **No self-registration** (private app; not on the `with-registration` branch): removed register routes/controller/view + login/welcome links + unused `auth.*` keys; added `test_register_route_does_not_exist` (404); bootstrap via `php artisan migrate:fresh --seed` (seeded admin). Branch `main` = no registration, `with-registration` = keeps it — **173 passing (700 assertions)**, pint ✓, build ✓, smoke ✓ (4/4) — committed `02101c5`
+
+## Final — Full sweep ✅ DONE
+- [x] `composer test` full suite — **173 passing / 700 assertions**
+- [x] `npm run build` — ✓ (app-Qgh3cLIW.js, app-BotCXlyq.css)
+- [x] Final smoke test of every module + role switching — **39/39**: admin (dashboard, clients, products, sales, sales/create, inventory, reports, settings, audit, users all 200); vendedor (sales/products/sales.create/clients/dashboard allowed, users/reports/settings/inventory/audit 403); encargado (inventory/reports/products/products.create allowed, users/sales.create/settings/audit 403); guest `/register` 404
+- [x] Update README with setup/run instructions — requisitos, instalación, seeder (3 demo users), tests, matriz de roles, funcionalidades, ramas (`main` sin registro / `with-registration`)
