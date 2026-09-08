@@ -2,14 +2,15 @@ export default function languageSwitcher() {
     return {
         switching: false,
 
-        setLocale(locale) {
-            if (this.switching) {
-                return;
-            }
+setLocale(locale) {
+        if (this.switching) {
+            return;
+        }
 
-            this.switching = true;
+        this.switching = true;
 
-            fetch(`/language/${locale}`, {
+        const baseUrl = document.querySelector('meta[name="app-url"]')?.content || '';
+        fetch(`${baseUrl}/language/${locale}`, {
                 method: 'POST',
                 redirect: 'manual',
                 headers: {
