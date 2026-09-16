@@ -163,8 +163,8 @@ class ReportTest extends TestCase
         $product = Product::factory()->create(['name' => 'Producto Estrella', 'sku' => 'EST-1', 'production_cost' => 10]);
         $sale = Sale::factory()->create();
 
-        SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id, 'quantity' => 4, 'unit_price' => 25, 'total' => 100]);
-        SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id, 'quantity' => 2, 'unit_price' => 25, 'total' => 50]);
+        SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id, 'quantity' => 4, 'unit_price' => 25, 'cost' => 10, 'total' => 100]);
+        SaleItem::factory()->create(['sale_id' => $sale->id, 'product_id' => $product->id, 'quantity' => 2, 'unit_price' => 25, 'cost' => 10, 'total' => 50]);
 
         $cost = 6 * 10;
 

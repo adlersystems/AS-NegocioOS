@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['sale_id', 'product_id', 'quantity', 'unit_price', 'total'])]
+#[Fillable(['sale_id', 'product_id', 'quantity', 'unit_price', 'cost', 'total'])]
 class SaleItem extends Model
 {
     /** @use HasFactory<SaleItemFactory> */
@@ -20,6 +20,7 @@ class SaleItem extends Model
         return [
             'quantity' => 'integer',
             'unit_price' => 'decimal:2',
+            'cost' => 'decimal:2',
             'total' => 'decimal:2',
         ];
     }

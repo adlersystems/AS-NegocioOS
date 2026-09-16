@@ -25,6 +25,7 @@ class SaleFactory extends Factory
             'subtotal' => 0,
             'tax_amount' => 0,
             'total' => 0,
+            'tax_rate' => '12',
             'paid' => fake()->boolean(),
             'notes' => fake()->optional()->sentence(),
         ];

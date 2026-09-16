@@ -23,7 +23,8 @@ export default function saleForm(config = {}) {
         buildItem(data = {}) {
             const product = data.product_id ? productById(data.product_id) : null;
             const quantity = numberOrDefault(data.quantity, 1);
-            const unitPrice = product ? Number(product.price) : numberOrDefault(data.unit_price, 0);
+            const hasRecordedPrice = data.unit_price !== undefined && data.unit_price !== null && data.unit_price !== '';
+            const unitPrice = hasRecordedPrice ? Number(data.unit_price) : (product ? Number(product.price) : 0);
 
             return {
                 product_id: data.product_id ?? '',

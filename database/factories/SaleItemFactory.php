@@ -27,6 +27,7 @@ class SaleItemFactory extends Factory
             'product_id' => Product::factory(),
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
+            'cost' => null,
             'total' => round($quantity * $unitPrice, 2),
         ];
     }

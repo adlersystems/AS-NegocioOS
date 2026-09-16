@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -100,7 +101,7 @@ class SaleController extends Controller
             'products' => $this->sellableProducts($sale->items->pluck('product_id')->all()),
             'clients' => Client::orderBy('name')->get(['id', 'name']),
             'sellers' => User::orderBy('name')->get(['id', 'name']),
-            'iva' => (int) Setting::get('iva_percentage', 12),
+            'iva' => $sale->tax_rate !== null ? (float) $sale->tax_rate : (int) Setting::get('iva_percentage', 12),
         ]);
     }
 
@@ -111,7 +112,21 @@ class SaleController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($sale, $data) {
-            $this->reconcileItems($sale, $data['items']);
+            $sale->load('items');
+
+            $existing = $sale->items
+                ->map(fn (SaleItem $item) => ['product_id' => (int) $item->product_id, 'quantity' => (int) $item->quantity])
+                ->values()
+                ->all();
+
+            $incoming = array_map(
+                fn (array $row) => ['product_id' => (int) $row['product_id'], 'quantity' => (int) $row['quantity']],
+                $data['items']
+            );
+
+            if ($existing !== $incoming) {
+                $this->reconcileItems($sale, $data['items']);
+            }
 
             $sale->update([
                 'client_id' => $data['client_id'] ?? null,
@@ -170,7 +185,7 @@ class SaleController extends Controller
 
         $pdf = Pdf::loadView('sales.invoice-pdf', [
             'sale' => $sale,
-            'iva' => (int) Setting::get('iva_percentage', 12),
+            'iva' => $sale->tax_rate !== null ? (float) $sale->tax_rate : (int) Setting::get('iva_percentage', 12),
             'company' => [
                 'name' => Setting::get('company_name', 'AS-NegocioOS'),
                 'nit' => Setting::get('nit'),
@@ -223,13 +238,15 @@ class SaleController extends Controller
     /**
      * Reconcile stock when a sale is edited: products that left the sale are
      * restored, quantity increases decrease stock and decreases restore it.
-     * Items are rebuilt and totals recomputed from the authoritative prices.
+     * Existing lines keep their recorded unit price and cost snapshots; only
+     * brand-new lines are priced from the current product values. Totals are
+     * recomputed with the sale's stored tax rate (falling back to the current
+     * setting for legacy sales with an unknown rate).
      *
      * @param  array<int, array{product_id: string, quantity: string}>  $rows
      */
     private function reconcileItems(Sale $sale, array $rows): void
     {
-        $iva = (int) Setting::get('iva_percentage', 12);
         $invoice = $sale->invoiceNumber();
         $reason = __('app.sales.edit_reason').' '.$invoice;
 
@@ -306,25 +323,39 @@ class SaleController extends Controller
         foreach ($rows as $row) {
             $product = $products[(int) $row['product_id']];
             $quantity = (int) $row['quantity'];
-            $price = (float) $product->sale_price;
+            $previous = $oldByProduct->get($product->id);
+
+            if ($previous) {
+                $unitPrice = (float) $previous->unit_price;
+                $cost = $previous->cost !== null ? (float) $previous->cost : (float) $product->production_cost;
+            } else {
+                $unitPrice = (float) $product->sale_price;
+                $cost = (float) $product->production_cost;
+            }
 
             $created[] = [
                 'product_id' => $product->id,
                 'quantity' => $quantity,
-                'unit_price' => $price,
-                'total' => round($price * $quantity, 2),
+                'unit_price' => $unitPrice,
+                'cost' => $cost,
+                'total' => round($unitPrice * $quantity, 2),
             ];
+
+            $oldByProduct->forget($product->id);
         }
 
         $sale->items()->createMany($created);
 
         $subtotal = round(array_sum(array_column($created, 'total')), 2);
-        $tax = round($subtotal * ($iva / 100), 2);
+
+        $taxRate = $sale->tax_rate !== null ? (float) $sale->tax_rate : (float) Setting::get('iva_percentage', 12);
+        $tax = round($subtotal * ($taxRate / 100), 2);
 
         $sale->forceFill([
             'subtotal' => $subtotal,
             'tax_amount' => $tax,
             'total' => round($subtotal + $tax, 2),
+            'tax_rate' => $taxRate,
         ])->save();
     }
 
@@ -370,6 +401,7 @@ class SaleController extends Controller
                 'product' => $product,
                 'quantity' => $quantity,
                 'unit_price' => $price,
+                'cost' => (float) $product->production_cost,
             ];
         }
 
@@ -392,6 +424,7 @@ class SaleController extends Controller
                 'product_id' => $row['product']->id,
                 'quantity' => $row['quantity'],
                 'unit_price' => $row['unit_price'],
+                'cost' => $row['cost'],
                 'total' => round($row['unit_price'] * $row['quantity'], 2),
             ],
             $created
@@ -416,6 +449,7 @@ class SaleController extends Controller
             'subtotal' => $subtotal,
             'tax_amount' => $tax,
             'total' => round($subtotal + $tax, 2),
+            'tax_rate' => $iva,
         ])->save();
     }
 

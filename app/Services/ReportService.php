@@ -128,24 +128,25 @@ class ReportService
     }
 
     /**
-     * @return Collection<int, array{id: int, name: string, sku: ?string, quantity: int, revenue: float, margin: float}>
+     * @return Collection<int, array{id: int, name: string, sku: ?string, quantity: int, revenue: float, cost: float, margin: float}>
      */
     private function productsReport(?string $from, ?string $to, ?string $productId): Collection
     {
         $rows = SaleItem::query()
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
-            ->selectRaw('sale_items.product_id, products.name, products.sku, products.production_cost, products.sale_price,
-                SUM(sale_items.quantity) as quantity, SUM(sale_items.total) as revenue')
+            ->selectRaw('sale_items.product_id, products.name, products.sku,
+                SUM(sale_items.quantity) as quantity, SUM(sale_items.total) as revenue,
+                SUM(COALESCE(sale_items.cost, 0) * sale_items.quantity) as cost')
             ->when($from, fn (Builder $query) => $query->whereDate('sales.created_at', '>=', $from))
             ->when($to, fn (Builder $query) => $query->whereDate('sales.created_at', '<=', $to))
             ->when($productId, fn (Builder $query) => $query->where('sale_items.product_id', $productId))
-            ->groupBy('sale_items.product_id', 'products.name', 'products.sku', 'products.production_cost', 'products.sale_price')
+            ->groupBy('sale_items.product_id', 'products.name', 'products.sku')
             ->orderByDesc('quantity')
             ->get();
 
         return $rows->map(function ($row) {
-            $cost = (int) $row->quantity * (float) $row->production_cost;
+            $cost = (float) $row->cost;
 
             return [
                 'id' => $row->product_id,
