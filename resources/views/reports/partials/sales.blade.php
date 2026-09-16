@@ -40,10 +40,10 @@
                             <td class="py-3 pr-4">
                                 @if ($sale->client)
                                     <a href="{{ route('clients.show', $sale->client) }}" class="font-semibold text-on-surface transition hover:text-primary">
-                                        {{ $sale->client->name }}
+                                        {{ $sale->buyerName() }}
                                     </a>
                                 @else
-                                    <span class="text-on-surface-muted">{{ __('app.sales.no_invoice_client') }}</span>
+                                    <span class="{{ $sale->buyerName() ? 'text-on-surface' : 'text-on-surface-muted' }}">{{ $sale->buyerName() ?? __('app.sales.no_invoice_client') }}</span>
                                 @endif
                             </td>
                             <td class="py-3 pr-4 text-on-surface">{{ $sale->seller?->name ?? '—' }}</td>

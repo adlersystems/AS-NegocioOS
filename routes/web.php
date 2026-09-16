@@ -100,9 +100,21 @@ Route::middleware('auth')->group(function () {
         Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
-    Route::get('clients/export/pdf', [ClientController::class, 'exportPdf'])->name('clients.export.pdf');
-    Route::get('clients/export/excel', [ClientController::class, 'exportExcel'])->name('clients.export.excel');
-    Route::resource('clients', ClientController::class);
+    Route::get('clients/create', [ClientController::class, 'create'])->name('clients.create');
+    Route::post('clients', [ClientController::class, 'store'])->name('clients.store');
+
+    Route::get('clients/export/pdf', [ClientController::class, 'exportPdf'])->name('clients.export.pdf')
+        ->middleware('role:admin,encargado');
+    Route::get('clients/export/excel', [ClientController::class, 'exportExcel'])->name('clients.export.excel')
+        ->middleware('role:admin,encargado');
+    Route::get('clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit')
+        ->middleware('role:admin,encargado');
+    Route::put('clients/{client}', [ClientController::class, 'update'])->name('clients.update')
+        ->middleware('role:admin,encargado');
+    Route::delete('clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy')
+        ->middleware('role:admin,encargado');
+    Route::get('clients/{client}', [ClientController::class, 'show'])->name('clients.show');
+    Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
 
     Route::get('products', [ProductController::class, 'index'])->name('products.index');
 

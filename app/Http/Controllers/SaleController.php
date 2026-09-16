@@ -71,6 +71,7 @@ class SaleController extends Controller
                 'client_id' => $data['client_id'] ?? null,
                 'seller_id' => $data['seller_id'],
                 'notes' => $data['notes'] ?? null,
+                ...$this->clientSnapshot($data['client_id'] ?? null),
             ]);
 
             $this->applyItems($sale, $data['items']);
@@ -128,16 +129,38 @@ class SaleController extends Controller
                 $this->reconcileItems($sale, $data['items']);
             }
 
+            $clientId = $data['client_id'] ?? null;
+            $clientChanged = (int) $sale->client_id !== (int) $clientId;
+
             $sale->update([
-                'client_id' => $data['client_id'] ?? null,
+                'client_id' => $clientId,
                 'seller_id' => $data['seller_id'],
                 'notes' => $data['notes'] ?? null,
+                ...($clientChanged ? $this->clientSnapshot($clientId) : []),
             ]);
         });
 
         return redirect()
             ->route('sales.show', $sale)
             ->with('success', __('app.flash.updated', ['entity' => __('app.sales.singular')]));
+    }
+
+    /**
+     * Build the client identity snapshot for a sale.
+     *
+     * Walk-in sales (null client id) intentionally store NULL so the snapshot
+     * stays honest instead of inheriting a previous client's identity.
+     *
+     * @return array{client_name: ?string, client_nit: ?string}
+     */
+    private function clientSnapshot(?int $clientId): array
+    {
+        $client = $clientId !== null ? Client::find($clientId) : null;
+
+        return [
+            'client_name' => $client?->name,
+            'client_nit' => $client?->nit,
+        ];
     }
 
     public function togglePaid(Sale $sale): RedirectResponse

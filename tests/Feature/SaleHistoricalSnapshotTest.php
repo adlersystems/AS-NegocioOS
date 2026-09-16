@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\ReportService;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -524,6 +525,162 @@ class SaleHistoricalSnapshotTest extends TestCase
         $this->assertNull($zeroSubtotal->fresh()->tax_rate);
 
         $this->assertSame(8.25, (float) $withTax->items()->first()->cost);
+    }
+
+    public function test_store_snapshots_client_name_and_nit(): void
+    {
+        $client = Client::factory()->create(['name' => 'Cliente Instantáneo', 'nit' => '777-7']);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 10, 'production_cost' => 3, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 2],
+        ], ['client_id' => $client->id]);
+
+        $this->assertSame('Cliente Instantáneo', $sale->client_name);
+        $this->assertSame('777-7', $sale->client_nit);
+        $this->assertSame('Cliente Instantáneo', $sale->buyerName());
+        $this->assertSame('777-7', $sale->buyerNit());
+    }
+
+    public function test_walk_in_sale_stores_null_client_snapshot(): void
+    {
+        $product = Product::factory()->create(['name' => 'Mostrador', 'sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ]);
+
+        $this->assertNull($sale->client_name);
+        $this->assertNull($sale->client_nit);
+        $this->assertNull($sale->buyerName());
+    }
+
+    public function test_same_client_notes_only_edit_preserves_client_snapshot(): void
+    {
+        $client = Client::factory()->create(['name' => 'Nombre Viejo', 'nit' => '111-1']);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ], ['client_id' => $client->id]);
+
+        $client->update(['name' => 'Nombre Nuevo', 'nit' => '222-2']);
+
+        $this->actingAs($this->admin)->put(route('sales.update', $sale), [
+            'client_id' => $client->id,
+            'seller_id' => $this->seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+            'notes' => 'Nota nueva',
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $sale->refresh();
+
+        $this->assertSame('Nombre Viejo', $sale->client_name);
+        $this->assertSame('111-1', $sale->client_nit);
+    }
+
+    public function test_changing_client_id_refreshes_the_client_snapshot(): void
+    {
+        $old = Client::factory()->create(['name' => 'Cliente Antes', 'nit' => '333-3']);
+        $new = Client::factory()->create(['name' => 'Cliente Después', 'nit' => '444-4']);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ], ['client_id' => $old->id]);
+
+        $this->actingAs($this->admin)->put(route('sales.update', $sale), [
+            'client_id' => $new->id,
+            'seller_id' => $this->seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 1],
+            ],
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $sale->refresh();
+
+        $this->assertSame('Cliente Después', $sale->client_name);
+        $this->assertSame('444-4', $sale->client_nit);
+    }
+
+    public function test_renamed_client_still_renders_the_recorded_snapshot_name(): void
+    {
+        $client = Client::factory()->create(['name' => 'Nombre Original', 'nit' => '555-5']);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ], ['client_id' => $client->id]);
+
+        $client->update(['name' => 'Renombrado Total', 'nit' => '666-6']);
+
+        $sale->load('client');
+
+        $this->assertSame('Nombre Original', $sale->buyerName());
+        $this->assertSame('555-5', $sale->buyerNit());
+    }
+
+    public function test_search_finds_renamed_clients_by_recorded_snapshot(): void
+    {
+        $client = Client::factory()->create(['name' => 'Comprador Antiguo', 'nit' => '888-8']);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ], ['client_id' => $client->id]);
+
+        $client->update(['name' => 'Comprador Renombrado']);
+
+        $this->actingAs($this->admin)
+            ->get(route('sales.index', ['search' => 'Comprador Antiguo']))
+            ->assertOk()
+            ->assertSee('Comprador Antiguo');
+    }
+
+    public function test_client_identity_backfill_reconstructs_legacy_rows_and_keeps_walk_ins_null(): void
+    {
+        $client = Client::factory()->create(['name' => 'Legacy Backfill', 'nit' => '999-9']);
+        $withClient = Sale::query()->forceCreate([
+            'client_id' => $client->id,
+            'seller_id' => $this->seller->id,
+            'subtotal' => 100,
+            'tax_amount' => 12,
+            'total' => 112,
+            'tax_rate' => 12,
+        ]);
+        $walkIn = Sale::query()->forceCreate([
+            'client_id' => null,
+            'seller_id' => $this->seller->id,
+            'subtotal' => 50,
+            'tax_amount' => 0,
+            'total' => 50,
+            'tax_rate' => null,
+        ]);
+
+        $migration = include database_path(
+            'migrations/2026_09_17_100000_add_client_identity_snapshots_to_sales_table.php'
+        );
+
+        $this->assertInstanceOf(Migration::class, $migration);
+
+        $migration->backfillClientIdentity();
+
+        $this->assertSame('Legacy Backfill', $withClient->fresh()->client_name);
+        $this->assertSame('999-9', $withClient->fresh()->client_nit);
+        $this->assertNull($walkIn->fresh()->client_name);
+        $this->assertNull($walkIn->fresh()->client_nit);
+    }
+
+    public function test_clients_nit_has_a_database_unique_index(): void
+    {
+        $columns = collect(Schema::getIndexes('clients'))
+            ->filter(fn (array $index) => $index['unique'])
+            ->flatMap(fn (array $index) => $index['columns'])
+            ->all();
+
+        $this->assertContains('nit', $columns);
     }
 
     public function test_product_cost_change_does_not_affect_existing_sale_at_all(): void

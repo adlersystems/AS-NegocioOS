@@ -54,9 +54,9 @@
                     <p class="mt-0.5 text-sm text-on-surface-muted">{{ __('app.sales.sales_date') }}: {{ $sale->created_at->format('d/m/Y H:i') }}</p>
                 </div>
                 <div class="text-right text-sm">
-                    <p class="font-semibold text-on-surface">{{ $sale->client?->name ?? __('app.sales.no_invoice_client') }}</p>
-                    @if ($sale->client?->nit)
-                        <p class="text-on-surface-muted">{{ __('app.labels.nit') }}: {{ $sale->client->nit }}</p>
+                    <p class="font-semibold text-on-surface">{{ $sale->buyerName() ?? __('app.sales.no_invoice_client') }}</p>
+                    @if ($sale->buyerNit())
+                        <p class="text-on-surface-muted">{{ __('app.labels.nit') }}: {{ $sale->buyerNit() }}</p>
                     @endif
                     <p class="text-on-surface-muted">{{ __('app.labels.seller') }}: {{ $sale->seller?->name ?? '—' }}</p>
                 </div>

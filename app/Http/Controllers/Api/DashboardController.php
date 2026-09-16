@@ -91,7 +91,7 @@ class DashboardController extends Controller
             ] : null,
             'recent_sales' => $recentSales->map(fn (Sale $sale) => [
                 'invoice_number' => $sale->invoiceNumber(),
-                'client' => $sale->client?->name,
+                'client' => $sale->buyerName(),
                 'seller' => $sale->seller?->name,
                 'total' => (float) $sale->total,
                 'paid' => $sale->isPaid(),

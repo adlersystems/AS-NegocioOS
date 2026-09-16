@@ -136,6 +136,7 @@ return [
         'confirm_delete_desc' => 'The record of',
         'export_title' => 'Client list',
         'exported_at' => 'Generated on :date by :user',
+        'delete_blocked_sales' => 'This client cannot be deleted because it has registered sales.',
     ],
 
     'users' => [

@@ -163,7 +163,7 @@ class ClientTest extends TestCase
 
     public function test_update_edits_the_client_and_ignores_its_own_email(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->manager()->create();
         $client = Client::factory()->create(['name' => 'Nombre Original', 'email' => 'mismo@example.com']);
 
         $this->actingAs($user)
@@ -181,7 +181,7 @@ class ClientTest extends TestCase
 
     public function test_update_rejects_email_used_by_another_client(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->manager()->create();
         $client = Client::factory()->create();
         $other = Client::factory()->create(['email' => 'ocupado@example.com']);
 
@@ -195,7 +195,7 @@ class ClientTest extends TestCase
 
     public function test_update_redirects_to_a_page_rendering_the_success_toast(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->manager()->create();
         $client = Client::factory()->create(['name' => 'Antes']);
 
         $this->actingAs($user)
@@ -218,7 +218,7 @@ class ClientTest extends TestCase
 
     public function test_destroy_deletes_the_client(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->manager()->create();
         $client = Client::factory()->create();
 
         $this->actingAs($user)
@@ -228,9 +228,54 @@ class ClientTest extends TestCase
         $this->assertDatabaseMissing('clients', ['id' => $client->id]);
     }
 
+    public function test_management_routes_are_denied_for_sellers(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $client = Client::factory()->create();
+
+        $this->actingAs($seller)
+            ->get(route('clients.export.pdf'))
+            ->assertForbidden();
+
+        $this->actingAs($seller)
+            ->get(route('clients.export.excel'))
+            ->assertForbidden();
+
+        $this->actingAs($seller)
+            ->put(route('clients.update', $client), ['name' => 'Bloqueado'])
+            ->assertForbidden();
+
+        $this->actingAs($seller)
+            ->delete(route('clients.destroy', $client))
+            ->assertForbidden();
+    }
+
+    public function test_client_with_sales_cannot_be_deleted(): void
+    {
+        $user = User::factory()->manager()->create();
+        $client = Client::factory()->create();
+        $seller = User::factory()->admin()->create();
+
+        Sale::factory()->create([
+            'client_id' => $client->id,
+            'seller_id' => $seller->id,
+            'subtotal' => 50.0,
+            'tax_amount' => 0,
+            'total' => 50.0,
+            'paid' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('clients.destroy', $client))
+            ->assertRedirect(route('clients.index'))
+            ->assertSessionHasErrors('delete');
+
+        $this->assertDatabaseHas('clients', ['id' => $client->id]);
+    }
+
     public function test_export_pdf_returns_a_pdf(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Client::factory()->count(2)->create(['name' => 'Para Exportar']);
 
         $this->actingAs($user)
@@ -241,7 +286,7 @@ class ClientTest extends TestCase
 
     public function test_export_excel_returns_a_spreadsheet(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         Client::factory()->count(2)->create(['name' => 'Para Excel']);
 
         $response = $this->actingAs($user)

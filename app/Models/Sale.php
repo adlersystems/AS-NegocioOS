@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['client_id', 'seller_id', 'subtotal', 'tax_amount', 'total', 'paid', 'notes'])]
+#[Fillable(['client_id', 'client_name', 'client_nit', 'seller_id', 'subtotal', 'tax_amount', 'total', 'paid', 'notes'])]
 class Sale extends Model
 {
     /** @use HasFactory<SaleFactory> */
@@ -48,6 +48,25 @@ class Sale extends Model
         return (bool) $this->paid;
     }
 
+    /**
+     * The client name recorded at the moment of the sale.
+     *
+     * Falls back to the live relation only when the sale carries no snapshot,
+     * which keeps legacy rows readable without rewriting their past.
+     */
+    public function buyerName(): ?string
+    {
+        return $this->client_name ?? $this->client?->name;
+    }
+
+    /**
+     * The client tax id recorded at the moment of the sale.
+     */
+    public function buyerNit(): ?string
+    {
+        return $this->client_nit ?? $this->client?->nit;
+    }
+
     public function scopePaid(Builder $query): Builder
     {
         return $query->where('paid', true);
@@ -75,7 +94,9 @@ class Sale extends Model
                     ->orWhereHas('client', function (Builder $c) use ($search) {
                         $c->where('name', 'like', "%{$search}%")
                             ->orWhere('nit', 'like', "%{$search}%");
-                    });
+                    })
+                    ->orWhere('client_name', 'like', "%{$search}%")
+                    ->orWhere('client_nit', 'like', "%{$search}%");
             });
         });
     }

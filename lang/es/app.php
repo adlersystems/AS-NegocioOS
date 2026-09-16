@@ -136,6 +136,7 @@ return [
         'confirm_delete_desc' => 'Se eliminará el registro de',
         'export_title' => 'Listado de clientes',
         'exported_at' => 'Generado el :date por :user',
+        'delete_blocked_sales' => 'No se puede eliminar el cliente porque tiene ventas registradas.',
     ],
 
     'users' => [

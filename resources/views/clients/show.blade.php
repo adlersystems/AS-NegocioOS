@@ -13,7 +13,9 @@
     {{-- Header --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <x-button :href="route('clients.index')" variant="ghost" size="sm" icon="arrow-left">{{ __('app.actions.back') }}</x-button>
-        <x-button :href="route('clients.edit', $client)" variant="secondary" icon="pencil">{{ __('app.actions.edit') }}</x-button>
+        @if (auth()->user()?->canManageClients())
+            <x-button :href="route('clients.edit', $client)" variant="secondary" icon="pencil">{{ __('app.actions.edit') }}</x-button>
+        @endif
     </div>
 
     {{-- Profile --}}

@@ -68,6 +68,8 @@ class ClientController extends Controller
 
     public function update(UpdateClientRequest $request, Client $client): RedirectResponse
     {
+        abort_unless(auth()->user()?->canManageClients(), 403);
+
         $client->update($request->validated());
 
         return redirect()
@@ -77,6 +79,14 @@ class ClientController extends Controller
 
     public function destroy(Client $client): RedirectResponse
     {
+        abort_unless(auth()->user()?->canManageClients(), 403);
+
+        if ($client->sales()->exists()) {
+            return redirect()
+                ->route('clients.index')
+                ->withErrors(['delete' => __('app.clients.delete_blocked_sales')]);
+        }
+
         $client->delete();
 
         return redirect()
@@ -86,6 +96,8 @@ class ClientController extends Controller
 
     public function exportPdf(Request $request): Response
     {
+        abort_unless(auth()->user()?->canManageClients(), 403);
+
         $clients = Client::query()
             ->withCount('sales')
             ->withSum('sales', 'total')
@@ -104,6 +116,8 @@ class ClientController extends Controller
 
     public function exportExcel(Request $request): BinaryFileResponse
     {
+        abort_unless(auth()->user()?->canManageClients(), 403);
+
         $search = $request->string('search')?->toString();
 
         return Excel::download(

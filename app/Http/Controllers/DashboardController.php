@@ -86,7 +86,7 @@ class DashboardController extends Controller
                 'expiring_soon' => Product::expiringSoon()->count(),
             ],
             'topClient' => $topClient ? [
-                'name' => $topClient->client?->name ?? __('app.labels.none'),
+                'name' => $topClient->buyerName() ?? __('app.labels.none'),
                 'total' => Setting::formatMoney($topClient->total),
             ] : null,
             'recentSales' => $recentSales,

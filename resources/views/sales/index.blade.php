@@ -93,9 +93,9 @@
                                     {{ $sale->invoiceNumber() }}
                                 </a>
                                 <p class="truncate text-xs text-on-surface-muted">
-                                    {{ $sale->client?->name ?? __('app.sales.no_invoice_client') }}
-                                    @if ($sale->client?->nit)
-                                        <span class="mx-1">·</span>{{ $sale->client->nit }}
+                                    {{ $sale->buyerName() ?? __('app.sales.no_invoice_client') }}
+                                    @if ($sale->buyerNit())
+                                        <span class="mx-1">·</span>{{ $sale->buyerNit() }}
                                     @endif
                                     <span class="mx-1">·</span>{{ $sale->seller?->name ?? '—' }}
                                 </p>

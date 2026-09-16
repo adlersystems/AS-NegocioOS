@@ -38,8 +38,10 @@
                 @if ($search)
                     <x-button :href="route('clients.index')" variant="ghost" size="sm" icon="close">{{ __('app.actions.reset') }}</x-button>
                 @endif
-                <x-button :href="route('clients.export.pdf', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_pdf') }}</x-button>
-                <x-button :href="route('clients.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
+                @if (auth()->user()?->canManageClients())
+                    <x-button :href="route('clients.export.pdf', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_pdf') }}</x-button>
+                    <x-button :href="route('clients.export.excel', $exportQuery)" variant="secondary" size="sm" icon="download" onclick="window.showToast('success', '{{ __('app.flash.exported') }}')">{{ __('app.actions.export_excel') }}</x-button>
+                @endif
             </div>
         </div>
 
@@ -102,21 +104,23 @@
                                 >
                                     <x-icon name="eye" class="h-4 w-4" />
                                 </a>
-                                <a
-                                    href="{{ route('clients.edit', $client) }}"
-                                    class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"
-                                    :title="'{{ __('app.actions.edit') }}'"
-                                >
-                                    <x-icon name="pencil" class="h-4 w-4" />
-                                </a>
-                                <button
-                                    type="button"
-                                    @click="deleteClient = @js(['name' => $client->name, 'url' => route('clients.destroy', $client)])"
-                                    class="rounded-lg p-2 text-on-surface-muted transition hover:bg-danger-soft hover:text-danger"
-                                    :title="'{{ __('app.actions.delete') }}'"
-                                >
-                                    <x-icon name="trash" class="h-4 w-4" />
-                                </button>
+                                @if (auth()->user()?->canManageClients())
+                                    <a
+                                        href="{{ route('clients.edit', $client) }}"
+                                        class="rounded-lg p-2 text-on-surface-muted transition hover:bg-surface-sunken hover:text-on-surface"
+                                        :title="'{{ __('app.actions.edit') }}'"
+                                    >
+                                        <x-icon name="pencil" class="h-4 w-4" />
+                                    </a>
+                                    <button
+                                        type="button"
+                                        @click="deleteClient = @js(['name' => $client->name, 'url' => route('clients.destroy', $client)])"
+                                        class="rounded-lg p-2 text-on-surface-muted transition hover:bg-danger-soft hover:text-danger"
+                                        :title="'{{ __('app.actions.delete') }}'"
+                                    >
+                                        <x-icon name="trash" class="h-4 w-4" />
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @endforeach

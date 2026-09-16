@@ -64,8 +64,8 @@ class ReportController extends Controller
                 'unpaid_total' => $data['unpaidTotal'],
                 'data' => $data['sales']->map(fn (Sale $sale) => [
                     'invoice_number' => $sale->invoiceNumber(),
-                    'client' => $sale->client?->name,
-                    'client_nit' => $sale->client?->nit,
+                    'client' => $sale->buyerName(),
+                    'client_nit' => $sale->buyerNit(),
                     'seller' => $sale->seller?->name,
                     'subtotal' => (float) $sale->subtotal,
                     'tax_amount' => (float) $sale->tax_amount,

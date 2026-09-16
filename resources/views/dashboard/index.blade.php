@@ -134,7 +134,7 @@
                                 <div class="min-w-0">
                                     <p class="truncate text-sm font-semibold text-on-surface">{{ $sale->invoiceNumber() }}</p>
                                     <p class="truncate text-xs text-on-surface-muted">
-                                        {{ $sale->client?->name ?? __('app.labels.none') }}
+                                        {{ $sale->buyerName() ?? __('app.labels.none') }}
                                         · {{ $sale->seller?->name }}
                                     </p>
                                 </div>

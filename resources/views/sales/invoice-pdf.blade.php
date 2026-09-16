@@ -61,9 +61,9 @@
     <div class="parties">
         <div class="party">
             <div class="label">{{ __('app.labels.name') }}</div>
-            <p>{{ $sale->client?->name ?? __('app.sales.no_invoice_client') }}</p>
-            @if ($sale->client?->nit)
-                <p>{{ __('app.labels.nit') }}: {{ $sale->client->nit }}</p>
+            <p>{{ $sale->buyerName() ?? __('app.sales.no_invoice_client') }}</p>
+            @if ($sale->buyerNit())
+                <p>{{ __('app.labels.nit') }}: {{ $sale->buyerNit() }}</p>
             @endif
         </div>
         <div class="party" style="text-align:right;">

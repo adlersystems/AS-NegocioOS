@@ -47,8 +47,8 @@
                 <tr>
                     <td>{{ $sale->invoiceNumber() }}</td>
                     <td>{{ $sale->created_at->format('d/m/Y H:i') }}</td>
-                    <td>{{ $sale->client?->name ?? __('app.sales.no_invoice_client') }}</td>
-                    <td>{{ $sale->client?->nit ?? '—' }}</td>
+                    <td>{{ $sale->buyerName() ?? __('app.sales.no_invoice_client') }}</td>
+                    <td>{{ $sale->buyerNit() ?? '—' }}</td>
                     <td>{{ $sale->seller?->name ?? '—' }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($sale->subtotal) }}</td>
                     <td class="num">{{ \App\Models\Setting::formatMoney($sale->tax_amount) }}</td>

@@ -99,6 +99,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Roles allowed to manage clients: edit, delete and exports.
+     *
+     * Creating a client is intentionally left open to every authenticated role
+     * so the front desk can keep registering new walk-in clients while closing a
+     * sale; the approved client record is then snapshotted onto the sale.
+     */
+    public function canManageClients(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
+    }
+
+    /**
      * Roles allowed to toggle the paid status of a sale.
      */
     public function canTogglePaid(): bool

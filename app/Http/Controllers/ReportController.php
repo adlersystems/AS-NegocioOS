@@ -127,8 +127,8 @@ class ReportController extends Controller
                 $data['sales']->map(fn (Sale $sale) => [
                     $sale->invoiceNumber(),
                     $sale->created_at->format('d/m/Y H:i'),
-                    $sale->client?->name ?? __('app.sales.no_invoice_client'),
-                    $sale->client?->nit,
+                    $sale->buyerName() ?? __('app.sales.no_invoice_client'),
+                    $sale->buyerNit(),
                     $sale->seller?->name ?? __('app.labels.none'),
                     (float) $sale->subtotal,
                     (float) $sale->tax_amount,
