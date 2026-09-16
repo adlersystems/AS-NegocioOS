@@ -110,6 +110,11 @@ ventas, inventario, reportes, configuración, API + audit, usuarios).
 - **API REST** (Sanctum): auth token, dashboard, clientes, productos, ventas, inventario,
   reportes, configuración.
 
+## Manual de usuario
+
+- [Manual en español](docs/manual-es.md)
+- [Manual en inglés](docs/manual-en.md)
+
 ## Idiomas
 
 Soporta español e inglés. El idioma se puede cambiar con el selector del encabezado o desde
