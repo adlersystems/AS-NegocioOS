@@ -16,6 +16,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -63,13 +65,17 @@ class SaleController extends Controller
     {
         $data = $request->validated();
 
-        $sale = Sale::create([
-            'client_id' => $data['client_id'] ?? null,
-            'seller_id' => $data['seller_id'],
-            'notes' => $data['notes'] ?? null,
-        ]);
+        $sale = DB::transaction(function () use ($data) {
+            $sale = Sale::create([
+                'client_id' => $data['client_id'] ?? null,
+                'seller_id' => $data['seller_id'],
+                'notes' => $data['notes'] ?? null,
+            ]);
 
-        $this->applyItems($sale, $data['items']);
+            $this->applyItems($sale, $data['items']);
+
+            return $sale;
+        });
 
         return redirect()
             ->route('sales.show', $sale)
@@ -104,13 +110,15 @@ class SaleController extends Controller
 
         $data = $request->validated();
 
-        $this->reconcileItems($sale, $data['items']);
+        DB::transaction(function () use ($sale, $data) {
+            $this->reconcileItems($sale, $data['items']);
 
-        $sale->update([
-            'client_id' => $data['client_id'] ?? null,
-            'seller_id' => $data['seller_id'],
-            'notes' => $data['notes'] ?? null,
-        ]);
+            $sale->update([
+                'client_id' => $data['client_id'] ?? null,
+                'seller_id' => $data['seller_id'],
+                'notes' => $data['notes'] ?? null,
+            ]);
+        });
 
         return redirect()
             ->route('sales.show', $sale)
@@ -132,22 +140,24 @@ class SaleController extends Controller
     {
         abort_unless(auth()->user()->canWriteSales(), 403);
 
-        $invoice = $sale->invoiceNumber();
+        DB::transaction(function () use ($sale) {
+            $invoice = $sale->invoiceNumber();
 
-        foreach ($sale->items as $item) {
-            $item->product?->increment('stock', $item->quantity);
+            foreach ($sale->items as $item) {
+                $item->product?->increment('stock', $item->quantity);
 
-            InventoryMovement::create([
-                'product_id' => $item->product_id,
-                'user_id' => auth()->id(),
-                'type' => InventoryMovement::TYPE_IN,
-                'quantity' => $item->quantity,
-                'reason' => __('app.sales.destroy_reason').' '.$invoice,
-                'reference' => $invoice,
-            ]);
-        }
+                InventoryMovement::create([
+                    'product_id' => $item->product_id,
+                    'user_id' => auth()->id(),
+                    'type' => InventoryMovement::TYPE_IN,
+                    'quantity' => $item->quantity,
+                    'reason' => __('app.sales.destroy_reason').' '.$invoice,
+                    'reference' => $invoice,
+                ]);
+            }
 
-        $sale->delete();
+            $sale->delete();
+        });
 
         return redirect()
             ->route('sales.index')
@@ -236,8 +246,35 @@ class SaleController extends Controller
                 ...$oldByProduct->keys()->all(),
                 ...array_keys($newByProduct),
             ]))
+            ->lockForUpdate()
             ->get()
             ->keyBy('id');
+
+        foreach ($products as $productId => $product) {
+            $oldQty = (int) ($oldByProduct[$productId]->quantity ?? 0);
+            $newQty = $newByProduct[$productId] ?? 0;
+
+            if ($newQty <= $oldQty) {
+                continue;
+            }
+
+            if ($product->stock + $oldQty < $newQty) {
+                $index = null;
+                foreach ($rows as $i => $row) {
+                    if ((int) $row['product_id'] === $productId) {
+                        $index = $i;
+                        break;
+                    }
+                }
+
+                throw ValidationException::withMessages([
+                    "items.{$index}.quantity" => __('app.sales.insufficient_stock', [
+                        'product' => $product->name,
+                        'stock' => $product->stock + $oldQty,
+                    ]),
+                ]);
+            }
+        }
 
         foreach ($oldByProduct as $oldItem) {
             $productId = $oldItem->product_id;
@@ -314,10 +351,16 @@ class SaleController extends Controller
         $iva = (int) Setting::get('iva_percentage', 12);
         $subtotal = 0.0;
 
+        $products = Product::withTrashed()
+            ->whereIn('id', array_map('intval', array_column($rows, 'product_id')))
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('id');
+
         $created = [];
 
         foreach ($rows as $row) {
-            $product = Product::withTrashed()->find((int) $row['product_id']);
+            $product = $products[(int) $row['product_id']];
             $quantity = (int) $row['quantity'];
 
             $price = (float) $product->sale_price;
@@ -328,6 +371,20 @@ class SaleController extends Controller
                 'quantity' => $quantity,
                 'unit_price' => $price,
             ];
+        }
+
+        foreach ($rows as $index => $row) {
+            $product = $products[(int) $row['product_id']];
+            $quantity = (int) $row['quantity'];
+
+            if ($product->stock < $quantity) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.quantity" => __('app.sales.insufficient_stock', [
+                        'product' => $product->name,
+                        'stock' => $product->stock,
+                    ]),
+                ]);
+            }
         }
 
         $sale->items()->createMany(array_map(

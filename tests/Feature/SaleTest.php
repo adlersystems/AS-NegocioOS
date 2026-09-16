@@ -411,31 +411,6 @@ class SaleTest extends TestCase
         ]);
     }
 
-    public function test_update_validates_stock_restoring_previous_quantities(): void
-    {
-        $seller = User::factory()->seller()->create();
-        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 5]);
-
-        $this->actingAs($seller)->post(route('sales.store'), [
-            'seller_id' => $seller->id,
-            'items' => [
-                ['product_id' => $product->id, 'quantity' => 4],
-            ],
-        ]);
-
-        $sale = Sale::query()->firstOrFail();
-        $admin = User::factory()->admin()->create();
-
-        $this->actingAs($admin)
-            ->put(route('sales.update', $sale), [
-                'seller_id' => $seller->id,
-                'items' => [
-                    ['product_id' => $product->id, 'quantity' => 6],
-                ],
-            ])
-            ->assertSessionHasErrors('items.0.quantity');
-    }
-
     public function test_destroy_restores_stock_and_annuls_movements(): void
     {
         $seller = User::factory()->seller()->create();
@@ -634,5 +609,178 @@ class SaleTest extends TestCase
         ]);
 
         $this->assertSame(112.0, $client->pending_balance);
+    }
+
+    public function test_update_validates_stock_restoring_previous_quantities(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 5]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 4],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->put(route('sales.update', $sale), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 6],
+                ],
+            ])
+            ->assertSessionHasErrors('items.0.quantity');
+
+        $this->assertSame(1, $product->fresh()->stock);
+        $this->assertDatabaseCount('sale_items', 1);
+        $this->assertDatabaseHas('sale_items', [
+            'sale_id' => $sale->id,
+            'product_id' => $product->id,
+            'quantity' => 4,
+        ]);
+        $this->assertDatabaseCount('inventory_movements', 1);
+
+        $this->assertSame(40.00, (float) $sale->fresh()->subtotal);
+        $this->assertSame(4.80, (float) $sale->fresh()->tax_amount);
+        $this->assertSame(44.80, (float) $sale->fresh()->total);
+    }
+
+    public function test_store_rolls_back_all_changes_when_inventory_write_fails(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $client = Client::factory()->create(['name' => 'Cliente Rollback']);
+        $product = Product::factory()->create(['name' => 'Café', 'sale_price' => 50, 'stock' => 10]);
+
+        InventoryMovement::creating(function () {
+            throw new \RuntimeException('inventory write failed');
+        });
+
+        $this->actingAs($seller)
+            ->post(route('sales.store'), [
+                'client_id' => $client->id,
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 3],
+                ],
+            ])
+            ->assertServerError();
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('sale_items', 0);
+        $this->assertDatabaseCount('inventory_movements', 0);
+        $this->assertSame(10, $product->fresh()->stock);
+    }
+
+    public function test_update_rolls_back_partial_stock_reconciliation_when_inventory_write_fails(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $p1 = Product::factory()->create(['name' => 'P1', 'sale_price' => 20, 'stock' => 10]);
+        $p2 = Product::factory()->create(['name' => 'P2', 'sale_price' => 50, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $p1->id, 'quantity' => 5],
+                ['product_id' => $p2->id, 'quantity' => 3],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
+
+        $this->assertSame(5, $p1->fresh()->stock);
+        $this->assertSame(7, $p2->fresh()->stock);
+
+        $createdCount = 0;
+        InventoryMovement::creating(function () use (&$createdCount) {
+            $createdCount++;
+
+            if ($createdCount === 2) {
+                throw new \RuntimeException('inventory write failed');
+            }
+        });
+
+        $this->actingAs($admin)
+            ->put(route('sales.update', $sale), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $p1->id, 'quantity' => 1],
+                    ['product_id' => $p2->id, 'quantity' => 8],
+                ],
+            ])
+            ->assertServerError();
+
+        $this->assertSame(5, $p1->fresh()->stock);
+        $this->assertSame(7, $p2->fresh()->stock);
+
+        $this->assertDatabaseCount('sale_items', 2);
+        $this->assertDatabaseHas('sale_items', [
+            'sale_id' => $sale->id,
+            'product_id' => $p1->id,
+            'quantity' => 5,
+        ]);
+        $this->assertDatabaseHas('sale_items', [
+            'sale_id' => $sale->id,
+            'product_id' => $p2->id,
+            'quantity' => 3,
+        ]);
+
+        $this->assertSame(250.00, (float) $sale->fresh()->subtotal);
+        $this->assertSame(30.00, (float) $sale->fresh()->tax_amount);
+        $this->assertSame(280.00, (float) $sale->fresh()->total);
+
+        $this->assertDatabaseCount('inventory_movements', 2);
+        $this->assertDatabaseMissing('inventory_movements', [
+            'reference' => $sale->invoiceNumber(),
+            'type' => InventoryMovement::TYPE_IN,
+        ]);
+    }
+
+    public function test_destroy_rolls_back_stock_restore_and_deletion_when_inventory_write_fails(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $p1 = Product::factory()->create(['name' => 'P1', 'sale_price' => 20, 'stock' => 10]);
+        $p2 = Product::factory()->create(['name' => 'P2', 'sale_price' => 50, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $p1->id, 'quantity' => 2],
+                ['product_id' => $p2->id, 'quantity' => 3],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
+
+        $this->assertSame(8, $p1->fresh()->stock);
+        $this->assertSame(7, $p2->fresh()->stock);
+
+        $createdCount = 0;
+        InventoryMovement::creating(function () use (&$createdCount) {
+            $createdCount++;
+
+            if ($createdCount === 2) {
+                throw new \RuntimeException('inventory write failed');
+            }
+        });
+
+        $this->actingAs($admin)
+            ->delete(route('sales.destroy', $sale))
+            ->assertServerError();
+
+        $this->assertDatabaseHas('sales', ['id' => $sale->id]);
+        $this->assertDatabaseCount('sale_items', 2);
+        $this->assertSame(8, $p1->fresh()->stock);
+        $this->assertSame(7, $p2->fresh()->stock);
+        $this->assertDatabaseCount('inventory_movements', 2);
+        $this->assertDatabaseMissing('inventory_movements', [
+            'reference' => $sale->invoiceNumber(),
+            'type' => InventoryMovement::TYPE_IN,
+        ]);
     }
 }

@@ -192,6 +192,28 @@ class InventoryTest extends TestCase
         $this->assertStringContainsString('data-toast-initial', $html);
     }
 
+    public function test_store_rolls_back_stock_change_when_inventory_write_fails(): void
+    {
+        $user = User::factory()->manager()->create();
+        $product = Product::factory()->create(['stock' => 10]);
+
+        InventoryMovement::creating(function () {
+            throw new \RuntimeException('inventory write failed');
+        });
+
+        $this->actingAs($user)
+            ->post(route('inventory.store'), [
+                'product_id' => $product->id,
+                'type' => InventoryMovement::TYPE_IN,
+                'quantity' => 15,
+                'reason' => 'Compra a proveedor',
+            ])
+            ->assertServerError();
+
+        $this->assertSame(10, $product->fresh()->stock);
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
     public function test_export_excel_downloads_the_movements_registry(): void
     {
         $this->actingAs(User::factory()->manager()->create())

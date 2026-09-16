@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -54,23 +56,35 @@ class InventoryController extends Controller
     {
         $data = $request->validated();
 
-        $product = Product::findOrFail((int) $data['product_id']);
-        $quantity = (int) $data['quantity'];
+        DB::transaction(function () use ($data) {
+            $product = Product::whereKey((int) $data['product_id'])->lockForUpdate()->first();
+            $quantity = (int) $data['quantity'];
+            $type = $data['type'];
 
-        if ($data['type'] === InventoryMovement::TYPE_IN) {
-            $product->increment('stock', $quantity);
-        } else {
-            $product->decrement('stock', $quantity);
-        }
+            if ($type === InventoryMovement::TYPE_OUT && $product->stock < $quantity) {
+                throw ValidationException::withMessages([
+                    'quantity' => __('app.inventory.insufficient_stock', [
+                        'product' => $product->name,
+                        'stock' => $product->stock,
+                    ]),
+                ]);
+            }
 
-        InventoryMovement::create([
-            'product_id' => $product->id,
-            'user_id' => auth()->id(),
-            'type' => $data['type'],
-            'quantity' => $quantity,
-            'reason' => $data['reason'],
-            'reference' => $data['reference'] ?? null,
-        ]);
+            if ($type === InventoryMovement::TYPE_IN) {
+                $product->increment('stock', $quantity);
+            } else {
+                $product->decrement('stock', $quantity);
+            }
+
+            InventoryMovement::create([
+                'product_id' => $product->id,
+                'user_id' => auth()->id(),
+                'type' => $type,
+                'quantity' => $quantity,
+                'reason' => $data['reason'],
+                'reference' => $data['reference'] ?? null,
+            ]);
+        });
 
         return redirect()
             ->route('inventory.index')
