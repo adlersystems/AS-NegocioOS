@@ -334,3 +334,51 @@ Negative/forbidden and API tests are explicit; add `assertForbidden`/`assertJson
 `feat: scope commercial cost and margin data to authorized roles`
 
 (Covers the API matrix + web/API cost/margin/inventory hiding.)
+
+---
+
+## 15. Implementation evidence (commit hash)
+
+Implemented and merged to `main` on 2026-09-16 as commit
+`485ef99` — `feat: scope commercial cost and margin data to authorized roles`.
+
+### Verification (all green)
+
+| Check | Result |
+|---|---|
+| `composer test` (full SQLite suite) | **217 passed / 217, 953 assertions** |
+| `vendor\bin\phpunit -c phpunit.mysql.xml` (MySQL concurrency group) | **3 passed / 3, 21 assertions** |
+| `vendor\bin\pint` + `vendor\bin\pint --test` | clean |
+| `php -l` on all touched files | all OK |
+| `migrate:fresh` per test | clean (RefreshDatabase) |
+
+### What shipped
+
+- `User::canViewCosts()` (admin + encargado) at `app/Models/User.php`.
+- API route gates: `/api/inventory` + `/api/reports` → `role:admin,encargado`
+  (`routes/api.php`).
+- API payload conditionals via `canViewCosts()`:
+  - `Api/ProductController`: `production_cost`/`margin` omitted for sellers on
+    index+show; `stock_value` omitted on show.
+  - `Api/SaleController::show`: per-item `cost` omitted for sellers.
+  - `Api/DashboardController`: `kpis.inventory_value` + `charts.by_seller`
+    omitted for sellers (queries skipped for non-cost roles).
+- Web conditionals:
+  - `ProductController::show` computes `stockValue`/`marginRate` only for cost
+    roles; `products/show.blade.php` renders the production-cost, margin and
+    stock-value metric cards only for cost roles.
+  - `DashboardController` + `dashboard/index.blade.php`: `inventory_value` KPI
+    and the by-seller chart canvas are cost-role only (the absent canvas is
+    skipped safely by `resources/js/dashboard.js`).
+- Tests: new `tests/Feature/ApiAuthorizationTest.php` (8 tests: API role matrix
+  + exposure for sellers vs admins), web exposure + visibility tests in
+  `RoleAccessTest`, `User::canViewCosts()` unit assertion in `UserTest`,
+  and `ProductTest::test_show_displays_movements_and_metrics` updated to run as
+  admin (stock-value metric is cost-role only now).
+- No migrations, no schema change, no config change.
+
+### Regression guard
+
+All existing admin-path assertions in `ApiEndpointsTest`, `DashboardTest`,
+`RoleAccessTest`, `ProductTest`, `ApiAuthTest` still pass unchanged — the
+admin/encargado payloads and rendered surfaces are identical to before.
