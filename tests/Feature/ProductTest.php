@@ -328,7 +328,7 @@ class ProductTest extends TestCase
 
     public function test_show_displays_movements_and_metrics(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->admin()->create();
         $product = Product::factory()->create([
             'name' => 'Producto Detalle',
             'stock' => 30,

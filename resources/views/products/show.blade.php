@@ -1,8 +1,8 @@
 <x-layouts.app :title="$product->name">
 
     @php
-        $margin = $product->margin();
-        $marginHint = ($margin >= 0 ? '+' : '').number_format($marginRate, 1).' %';
+        $margin = $canViewCosts ? $product->margin() : 0.0;
+        $marginHint = $canViewCosts ? ($margin >= 0 ? '+' : '').number_format($marginRate, 1).' %' : '';
         $movementTypes = ['in' => __('app.products.movement_in'), 'out' => __('app.products.movement_out')];
     @endphp
 
@@ -64,18 +64,22 @@
         <x-card>
             <x-metric :label="__('app.labels.sale_price')" :value="\App\Models\Setting::formatMoney($product->sale_price)" icon="sales" color="primary" />
         </x-card>
-        <x-card>
-            <x-metric :label="__('app.labels.production_cost')" :value="\App\Models\Setting::formatMoney($product->production_cost)" icon="coins" color="info" />
-        </x-card>
-        <x-card>
-            <x-metric :label="__('app.products.margin')" :value="\App\Models\Setting::formatMoney($margin)" icon="chart" color="success" :hint="$marginHint" />
-        </x-card>
+        @if ($canViewCosts)
+            <x-card>
+                <x-metric :label="__('app.labels.production_cost')" :value="\App\Models\Setting::formatMoney($product->production_cost)" icon="coins" color="info" />
+            </x-card>
+            <x-card>
+                <x-metric :label="__('app.products.margin')" :value="\App\Models\Setting::formatMoney($margin)" icon="chart" color="success" :hint="$marginHint" />
+            </x-card>
+        @endif
         <x-card>
             <x-metric :label="__('app.labels.stock')" :value="number_format($product->stock)" icon="box" color="warning" :hint="__('app.labels.min_stock').': '.number_format($product->min_stock)" />
         </x-card>
-        <x-card>
-            <x-metric :label="__('app.products.stock_value')" :value="\App\Models\Setting::formatMoney($stockValue)" icon="coins" color="info" />
-        </x-card>
+        @if ($canViewCosts)
+            <x-card>
+                <x-metric :label="__('app.products.stock_value')" :value="\App\Models\Setting::formatMoney($stockValue)" icon="coins" color="info" />
+            </x-card>
+        @endif
         <x-card>
             <x-metric :label="__('app.products.units_sold')" :value="number_format($unitsSold)" icon="sales" color="primary" />
         </x-card>

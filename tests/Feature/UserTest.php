@@ -162,4 +162,15 @@ class UserTest extends TestCase
 
         $this->assertDatabaseMissing('users', ['id' => $target->id]);
     }
+
+    public function test_can_view_costs_is_true_for_admin_and_manager_only(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $manager = User::factory()->manager()->create();
+        $seller = User::factory()->seller()->create();
+
+        $this->assertTrue($admin->canViewCosts());
+        $this->assertTrue($manager->canViewCosts());
+        $this->assertFalse($seller->canViewCosts());
+    }
 }

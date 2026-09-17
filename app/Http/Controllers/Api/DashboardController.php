@@ -9,11 +9,14 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
+        $canViewCosts = $request->user()->canViewCosts();
+
         $months = 6;
         $salesMonthly = [];
         $monthLabels = [];
@@ -34,12 +37,14 @@ class DashboardController extends Controller
                 ->sum('total');
         }
 
-        $salesBySeller = Sale::query()
-            ->selectRaw('seller_id, SUM(total) as total')
-            ->with('seller:id,name')
-            ->groupBy('seller_id')
-            ->orderByDesc('total')
-            ->get();
+        $salesBySeller = $canViewCosts
+            ? Sale::query()
+                ->selectRaw('seller_id, SUM(total) as total')
+                ->with('seller:id,name')
+                ->groupBy('seller_id')
+                ->orderByDesc('total')
+                ->get()
+            : collect();
 
         $topProducts = SaleItem::query()
             ->selectRaw('product_id, SUM(quantity) as quantity, SUM(total) as revenue')
@@ -63,9 +68,11 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->first();
 
-        $inventoryValue = (float) Product::query()
-            ->selectRaw('SUM(stock * production_cost) as value')
-            ->value('value');
+        $inventoryValue = $canViewCosts
+            ? (float) Product::query()
+                ->selectRaw('SUM(stock * production_cost) as value')
+                ->value('value')
+            : 0.0;
 
         return response()->json([
             'counts' => [
@@ -78,8 +85,9 @@ class DashboardController extends Controller
                 'today_revenue' => (float) Sale::whereDate('created_at', today())->sum('total'),
                 'month_revenue' => (float) Sale::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
                 'arpu' => (float) (Sale::avg('total') ?? 0),
+            ] + ($canViewCosts ? [
                 'inventory_value' => $inventoryValue,
-            ],
+            ] : []),
             'alerts' => [
                 'low_stock' => Product::lowStock()->where('stock', '>', 0)->count(),
                 'out_of_stock' => Product::where('stock', '<=', 0)->count(),
@@ -100,15 +108,16 @@ class DashboardController extends Controller
             'charts' => [
                 'sales_monthly' => ['labels' => $monthLabels, 'values' => $salesMonthly],
                 'revenue_trend' => ['labels' => $trendLabels, 'values' => $revenueTrend],
-                'by_seller' => [
-                    'labels' => $salesBySeller->map(fn ($sale) => $sale->seller?->name ?? __('app.labels.none'))->all(),
-                    'values' => $salesBySeller->map(fn ($sale) => (float) $sale->total)->all(),
-                ],
                 'top_products' => [
                     'labels' => $topProducts->map(fn ($item) => $item->product?->name ?? __('app.labels.none'))->all(),
                     'values' => $topProducts->map(fn ($item) => (int) $item->quantity)->all(),
                 ],
-            ],
+            ] + ($canViewCosts ? [
+                'by_seller' => [
+                    'labels' => $salesBySeller->map(fn ($sale) => $sale->seller?->name ?? __('app.labels.none'))->all(),
+                    'values' => $salesBySeller->map(fn ($sale) => (float) $sale->total)->all(),
+                ],
+            ] : []),
             'currency' => [
                 'code' => Setting::get('currency', 'GTQ'),
                 'symbol' => Setting::currencySymbol(),

@@ -117,4 +117,13 @@ class User extends Authenticatable
     {
         return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
     }
+
+    /**
+     * Roles allowed to view commercial cost-related data: production cost,
+     * margins, stock valuation and per-seller performance.
+     */
+    public function canViewCosts(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
+    }
 }

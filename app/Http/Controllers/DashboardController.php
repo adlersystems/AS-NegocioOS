@@ -13,6 +13,8 @@ class DashboardController extends Controller
 {
     public function __invoke(): View
     {
+        $canViewCosts = auth()->user()->canViewCosts();
+
         $months = 6;
 
         $salesMonthly = [];
@@ -34,12 +36,14 @@ class DashboardController extends Controller
                 ->sum('total');
         }
 
-        $salesBySeller = Sale::query()
-            ->selectRaw('seller_id, SUM(total) as total')
-            ->with('seller:id,name')
-            ->groupBy('seller_id')
-            ->orderByDesc('total')
-            ->get();
+        $salesBySeller = $canViewCosts
+            ? Sale::query()
+                ->selectRaw('seller_id, SUM(total) as total')
+                ->with('seller:id,name')
+                ->groupBy('seller_id')
+                ->orderByDesc('total')
+                ->get()
+            : collect();
 
         $topProducts = SaleItem::query()
             ->selectRaw('product_id, SUM(quantity) as quantity, SUM(total) as revenue')
@@ -63,9 +67,11 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->first();
 
-        $inventoryValue = Product::query()
-            ->selectRaw('SUM(stock * production_cost) as value')
-            ->value('value');
+        $inventoryValue = $canViewCosts
+            ? Product::query()
+                ->selectRaw('SUM(stock * production_cost) as value')
+                ->value('value')
+            : 0;
 
         return view('dashboard.index', [
             'counts' => [
@@ -78,8 +84,9 @@ class DashboardController extends Controller
                 'today_revenue' => Setting::formatMoney(Sale::whereDate('created_at', today())->sum('total')),
                 'month_revenue' => Setting::formatMoney(Sale::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total')),
                 'arpu' => Setting::formatMoney((float) (Sale::avg('total') ?? 0)),
+            ] + ($canViewCosts ? [
                 'inventory_value' => Setting::formatMoney((float) $inventoryValue),
-            ],
+            ] : []),
             'alerts' => [
                 'low_stock' => Product::lowStock()->where('stock', '>', 0)->count(),
                 'out_of_stock' => Product::where('stock', '<=', 0)->count(),
@@ -91,6 +98,7 @@ class DashboardController extends Controller
             ] : null,
             'recentSales' => $recentSales,
             'topProducts' => $topProducts,
+            'canViewCosts' => $canViewCosts,
             'charts' => [
                 'salesMonthly' => [
                     'labels' => $monthLabels,
@@ -100,15 +108,16 @@ class DashboardController extends Controller
                     'labels' => $trendLabels,
                     'values' => $revenueTrend,
                 ],
-                'bySeller' => [
-                    'labels' => $salesBySeller->map(fn ($s) => $s->seller?->name ?? __('app.labels.none'))->all(),
-                    'values' => $salesBySeller->map(fn ($s) => (float) $s->total)->all(),
-                ],
                 'topProducts' => [
                     'labels' => $topProducts->map(fn ($p) => $p->product?->name ?? __('app.labels.none'))->all(),
                     'values' => $topProducts->map(fn ($p) => (int) $p->quantity)->all(),
                 ],
-            ],
+            ] + ($canViewCosts ? [
+                'bySeller' => [
+                    'labels' => $salesBySeller->map(fn ($s) => $s->seller?->name ?? __('app.labels.none'))->all(),
+                    'values' => $salesBySeller->map(fn ($s) => (float) $s->total)->all(),
+                ],
+            ] : []),
         ]);
     }
 }

@@ -71,9 +71,10 @@ class ProductController extends Controller
             ->get();
 
         $unitsSold = (int) $product->saleItems()->sum('quantity');
-        $stockValue = (float) $product->stock * (float) $product->production_cost;
-        $margin = $product->margin();
-        $marginRate = (float) $product->production_cost > 0
+        $canViewCosts = auth()->user()->canViewCosts();
+        $stockValue = $canViewCosts ? (float) $product->stock * (float) $product->production_cost : 0.0;
+        $margin = $canViewCosts ? $product->margin() : 0.0;
+        $marginRate = $canViewCosts && (float) $product->production_cost > 0
             ? ($margin / (float) $product->production_cost) * 100
             : 0.0;
 
@@ -81,6 +82,7 @@ class ProductController extends Controller
             'product' => $product,
             'movements' => $movements,
             'unitsSold' => $unitsSold,
+            'canViewCosts' => $canViewCosts,
             'stockValue' => $stockValue,
             'marginRate' => $marginRate,
         ]);

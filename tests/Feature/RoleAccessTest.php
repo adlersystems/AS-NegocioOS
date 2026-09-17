@@ -123,4 +123,72 @@ class RoleAccessTest extends TestCase
         $this->get(route('products.index'))
             ->assertRedirect(route('login'));
     }
+
+    public function test_seller_product_show_hides_cost_margin_and_stock_value(): void
+    {
+        $product = Product::factory()->create([
+            'name' => 'Confidencial',
+            'sale_price' => 10,
+            'production_cost' => 6,
+            'stock' => 20,
+        ]);
+
+        $this->actingAs(User::factory()->seller()->create())
+            ->get(route('products.show', $product))
+            ->assertOk()
+            ->assertSee('Confidencial')
+            ->assertSee('Q 10.00', false)
+            ->assertSee('20')
+            ->assertDontSee('Costo de producción', false)
+            ->assertDontSee('Margen', false)
+            ->assertDontSee('Q 6.00', false)
+            ->assertDontSee('Q 120.00', false);
+    }
+
+    public function test_admin_product_show_renders_cost_margin_and_stock_value(): void
+    {
+        $product = Product::factory()->create([
+            'name' => 'Confidencial',
+            'sale_price' => 10,
+            'production_cost' => 6,
+            'stock' => 20,
+        ]);
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->get(route('products.show', $product))
+            ->assertOk()
+            ->assertSee('Confidencial')
+            ->assertSee('Costo de producción', false)
+            ->assertSee('Margen', false)
+            ->assertSee('Valor en stock', false)
+            ->assertSee('Q 6.00', false)
+            ->assertSee('Q 120.00', false);
+    }
+
+    public function test_seller_dashboard_hides_inventory_value_and_by_seller_chart(): void
+    {
+        $user = User::factory()->seller()->create();
+        Sale::factory()->create(['total' => 100]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Q 100.00', false)
+            ->assertDontSee('Valor del inventario', false)
+            ->assertDontSee('chart-by-seller', false);
+    }
+
+    public function test_admin_dashboard_renders_inventory_value_and_by_seller_chart(): void
+    {
+        $user = User::factory()->admin()->create();
+        Product::factory()->create(['stock' => 20, 'production_cost' => 6]);
+        Sale::factory()->create(['total' => 100]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Valor del inventario', false)
+            ->assertSee('Q 120.00', false)
+            ->assertSee('chart-by-seller', false);
+    }
 }

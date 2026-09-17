@@ -16,6 +16,8 @@ class ProductController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $canViewCosts = $request->user()->canViewCosts();
+
         $products = Product::query()
             ->search($request->string('search')?->toString())
             ->when($request->boolean('active'), fn (Builder $query) => $query->active())
@@ -31,20 +33,23 @@ class ProductController extends Controller
                 'min_stock' => $product->min_stock,
                 'is_active' => (bool) $product->is_active,
                 'expiration_date' => $product->expiration_date?->toDateString(),
-                'production_cost' => (float) $product->production_cost,
                 'sale_price' => (float) $product->sale_price,
-                'margin' => $product->margin(),
                 'low_stock' => $product->isLowStock(),
                 'out_of_stock' => $product->isOutOfStock(),
                 'expiring_soon' => $product->isExpiringSoon(),
                 'expired' => $product->isExpired(),
-            ])->all(),
+            ] + ($canViewCosts ? [
+                'production_cost' => (float) $product->production_cost,
+                'margin' => $product->margin(),
+            ] : []))->all(),
             'meta' => $this->meta($products),
         ]);
     }
 
     public function show(Request $request, Product $product): JsonResponse
     {
+        $canViewCosts = $request->user()->canViewCosts();
+
         $movements = $product->inventoryMovements()
             ->with('user:id,name')
             ->latest()
@@ -61,10 +66,7 @@ class ProductController extends Controller
                 'min_stock' => $product->min_stock,
                 'is_active' => (bool) $product->is_active,
                 'expiration_date' => $product->expiration_date?->toDateString(),
-                'production_cost' => (float) $product->production_cost,
                 'sale_price' => (float) $product->sale_price,
-                'margin' => $product->margin(),
-                'stock_value' => (float) ($product->stock * $product->production_cost),
                 'low_stock' => $product->isLowStock(),
                 'out_of_stock' => $product->isOutOfStock(),
                 'recent_movements' => $movements->map(fn (InventoryMovement $movement) => [
@@ -75,7 +77,11 @@ class ProductController extends Controller
                     'user' => $movement->user?->name,
                     'created_at' => $movement->created_at->toIso8601String(),
                 ])->all(),
-            ],
+            ] + ($canViewCosts ? [
+                'production_cost' => (float) $product->production_cost,
+                'margin' => $product->margin(),
+                'stock_value' => (float) ($product->stock * $product->production_cost),
+            ] : []),
         ]);
     }
 }

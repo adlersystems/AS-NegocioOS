@@ -46,7 +46,9 @@
         <x-card><x-metric :label="__('app.dashboard.today_revenue')" :value="$kpis['today_revenue']" icon="sales" color="info" /></x-card>
         <x-card><x-metric :label="__('app.dashboard.month_revenue')" :value="$kpis['month_revenue']" icon="calendar" color="primary" /></x-card>
         <x-card><x-metric :label="__('app.dashboard.arpu')" :value="$kpis['arpu']" icon="receipt" color="success" /></x-card>
-        <x-card><x-metric :label="__('app.dashboard.inventory_value')" :value="$kpis['inventory_value']" icon="box" color="warning" /></x-card>
+        @if ($canViewCosts)
+            <x-card><x-metric :label="__('app.dashboard.inventory_value')" :value="$kpis['inventory_value']" icon="box" color="warning" /></x-card>
+        @endif
     </div>
 
     {{-- Inventory alerts --}}
@@ -81,11 +83,13 @@
                 </div>
             </x-card>
 
-            <x-card :title="__('app.dashboard.sales_by_seller')">
-                <div class="h-64">
-                    <canvas id="chart-by-seller"></canvas>
-                </div>
-            </x-card>
+            @if ($canViewCosts)
+                <x-card :title="__('app.dashboard.sales_by_seller')">
+                    <div class="h-64">
+                        <canvas id="chart-by-seller"></canvas>
+                    </div>
+                </x-card>
+            @endif
 
             <x-card :title="__('app.dashboard.top_products')">
                 <div class="h-64">

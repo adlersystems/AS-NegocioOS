@@ -27,9 +27,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('sales', [SaleController::class, 'index'])->name('api.sales.index');
     Route::get('sales/{sale}', [SaleController::class, 'show'])->name('api.sales.show');
 
-    Route::get('inventory', [InventoryController::class, 'index'])->name('api.inventory.index');
+    Route::get('inventory', [InventoryController::class, 'index'])->name('api.inventory.index')
+        ->middleware('role:admin,encargado');
 
-    Route::get('reports', [ReportController::class, 'index'])->name('api.reports.index');
+    Route::get('reports', [ReportController::class, 'index'])->name('api.reports.index')
+        ->middleware('role:admin,encargado');
 
     Route::get('settings', [SettingController::class, 'index'])->name('api.settings.index')
         ->middleware('role:admin');

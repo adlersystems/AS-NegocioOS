@@ -46,8 +46,10 @@ class SaleController extends Controller
         ]);
     }
 
-    public function show(Sale $sale): JsonResponse
+    public function show(Request $request, Sale $sale): JsonResponse
     {
+        $canViewCosts = $request->user()->canViewCosts();
+
         $sale->load(['client', 'seller:id,name', 'items.product:id,name,sku']);
 
         return response()->json([
@@ -76,9 +78,10 @@ class SaleController extends Controller
                     'sku' => $item->product?->sku,
                     'quantity' => $item->quantity,
                     'price' => (float) $item->unit_price,
-                    'cost' => $item->cost !== null ? (float) $item->cost : null,
                     'total' => (float) $item->total,
-                ])->all(),
+                ] + ($canViewCosts ? [
+                    'cost' => $item->cost !== null ? (float) $item->cost : null,
+                ] : []))->all(),
             ],
         ]);
     }
