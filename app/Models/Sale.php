@@ -77,6 +77,17 @@ class Sale extends Model
         return $query->where('paid', false);
     }
 
+    /**
+     * Restrict the query to the sales a user is allowed to see.
+     *
+     * Only vendedores are scoped to their own sales; admins and encargados
+     * keep global visibility (F-INTEG-02, Rule B).
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
+    {
+        return $query->when($user?->isSeller(), fn (Builder $q) => $q->where('seller_id', $user->id));
+    }
+
     public function scopeBetweenDates(Builder $query, ?string $from, ?string $to): Builder
     {
         return $query

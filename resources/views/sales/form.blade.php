@@ -45,13 +45,23 @@
                     placeholder="{{ __('app.sales.no_invoice_client') }}"
                 />
 
-                <x-select
-                    name="seller_id"
-                    :label="__('app.labels.seller')"
-                    :selected="$sale->seller_id ?? auth()->id()"
-                    :options="$sellers->pluck('name', 'id')->all()"
-                    required
-                />
+                @if (auth()->user()->canOverrideSeller())
+                    <x-select
+                        name="seller_id"
+                        :label="__('app.labels.seller')"
+                        :selected="$sale->seller_id ?? auth()->id()"
+                        :options="$sellers->pluck('name', 'id')->all()"
+                        required
+                    />
+                @else
+                    <input type="hidden" name="seller_id" value="{{ auth()->id() }}">
+                    <div>
+                        <x-label>@lang('app.labels.seller')</x-label>
+                        <div class="mt-1 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-on-surface">
+                            {{ auth()->user()->name }}
+                        </div>
+                    </div>
+                @endif
 
                 <div class="sm:col-span-2">
                     <x-textarea name="notes" :label="__('app.labels.notes')" rows="2">{{ $sale->notes }}</x-textarea>

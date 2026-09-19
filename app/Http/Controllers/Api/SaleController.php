@@ -18,6 +18,7 @@ class SaleController extends Controller
     {
         $sales = Sale::query()
             ->with(['client:id,name,nit', 'seller:id,name'])
+            ->visibleTo($request->user())
             ->search($request->string('search')?->toString())
             ->betweenDates($request->string('from')?->toString(), $request->string('to')?->toString())
             ->when($request->string('client_id')?->toString(), fn (Builder $query, string $id) => $query->where('client_id', $id))
@@ -50,7 +51,11 @@ class SaleController extends Controller
     {
         $canViewCosts = $request->user()->canViewCosts();
 
-        $sale->load(['client', 'seller:id,name', 'items.product:id,name,sku']);
+        $sale = Sale::query()
+            ->visibleTo($request->user())
+            ->with(['client', 'seller:id,name', 'items.product:id,name,sku'])
+            ->whereKey($sale->getKey())
+            ->firstOrFail();
 
         return response()->json([
             'data' => [

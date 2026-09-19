@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -16,6 +17,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping
         private readonly ?string $sellerId = null,
         private readonly ?string $from = null,
         private readonly ?string $to = null,
+        private readonly ?User $user = null,
     ) {}
 
     /**
@@ -25,6 +27,7 @@ class SalesExport implements FromCollection, WithHeadings, WithMapping
     {
         return Sale::query()
             ->with(['client:id,name,nit', 'seller:id,name'])
+            ->visibleTo($this->user)
             ->search($this->search)
             ->when($this->sellerId, fn (Builder $query) => $query->where('seller_id', $this->sellerId))
             ->betweenDates($this->from, $this->to)

@@ -49,9 +49,9 @@ Route::middleware('auth')->group(function () {
     Route::get('sales', [SaleController::class, 'index'])->name('sales.index')
         ->middleware('role:admin,vendedor,encargado');
     Route::get('sales/create', [SaleController::class, 'create'])->name('sales.create')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin,vendedor,encargado');
     Route::post('sales', [SaleController::class, 'store'])->name('sales.store')
-        ->middleware('role:admin,vendedor');
+        ->middleware('role:admin,vendedor,encargado');
     Route::get('sales/{sale}', [SaleController::class, 'show'])->name('sales.show')
         ->middleware('role:admin,vendedor,encargado');
     Route::get('sales/{sale}/edit', [SaleController::class, 'edit'])->name('sales.edit')

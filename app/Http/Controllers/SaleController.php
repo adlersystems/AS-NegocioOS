@@ -34,6 +34,7 @@ class SaleController extends Controller
 
         $sales = Sale::query()
             ->with(['client:id,name', 'seller:id,name'])
+            ->visibleTo(auth()->user())
             ->search($search)
             ->when($sellerId, fn (Builder $query) => $query->where('seller_id', $sellerId))
             ->betweenDates($from, $to)
@@ -69,7 +70,9 @@ class SaleController extends Controller
         $sale = DB::transaction(function () use ($data) {
             $sale = Sale::create([
                 'client_id' => $data['client_id'] ?? null,
-                'seller_id' => $data['seller_id'],
+                'seller_id' => auth()->user()->canOverrideSeller()
+                    ? $data['seller_id']
+                    : auth()->id(),
                 'notes' => $data['notes'] ?? null,
                 ...$this->clientSnapshot($data['client_id'] ?? null),
             ]);
@@ -86,8 +89,14 @@ class SaleController extends Controller
 
     public function show(Sale $sale): View
     {
+        $sale = Sale::query()
+            ->visibleTo(auth()->user())
+            ->whereKey($sale->getKey())
+            ->firstOrFail()
+            ->load(['client', 'seller:id,name', 'items.product']);
+
         return view('sales.show', [
-            'sale' => $sale->load(['client', 'seller:id,name', 'items.product']),
+            'sale' => $sale,
         ]);
     }
 
@@ -134,7 +143,9 @@ class SaleController extends Controller
 
             $sale->update([
                 'client_id' => $clientId,
-                'seller_id' => $data['seller_id'],
+                'seller_id' => auth()->user()->canOverrideSeller()
+                    ? $data['seller_id']
+                    : $sale->seller_id,
                 'notes' => $data['notes'] ?? null,
                 ...($clientChanged ? $this->clientSnapshot($clientId) : []),
             ]);
@@ -204,7 +215,11 @@ class SaleController extends Controller
 
     public function exportPdf(Sale $sale): Response
     {
-        $sale->load(['client', 'seller', 'items.product']);
+        $sale = Sale::query()
+            ->visibleTo(auth()->user())
+            ->whereKey($sale->getKey())
+            ->firstOrFail()
+            ->load(['client', 'seller', 'items.product']);
 
         $pdf = Pdf::loadView('sales.invoice-pdf', [
             'sale' => $sale,
@@ -225,6 +240,7 @@ class SaleController extends Controller
     {
         $sales = Sale::query()
             ->with(['client:id,name,nit', 'seller:id,name'])
+            ->visibleTo(auth()->user())
             ->search($request->string('search')?->toString())
             ->when($request->string('seller_id')?->toString(), fn (Builder $query, string $sellerId) => $query->where('seller_id', $sellerId))
             ->betweenDates(
@@ -253,6 +269,7 @@ class SaleController extends Controller
                 $request->string('seller_id')?->toString(),
                 $request->string('from')?->toString(),
                 $request->string('to')?->toString(),
+                auth()->user(),
             ),
             'ventas-'.now()->format('Y-m-d').'.xlsx'
         );

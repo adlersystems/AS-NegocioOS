@@ -95,7 +95,18 @@ class User extends Authenticatable
      */
     public function canSell(): bool
     {
-        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_SELLER], true);
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_SELLER, self::ROLE_MANAGER], true);
+    }
+
+    /**
+     * Roles allowed to explicitly assign a sale to another seller.
+     *
+     * Only admins may override attribution; a vendedor or encargado is always
+     * bound to the authenticated principal (see F-INTEG-01).
+     */
+    public function canOverrideSeller(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
     }
 
     /**

@@ -2,7 +2,7 @@
 
     @php
         $user = auth()->user();
-        $canSell = in_array($user->role, ['admin', 'vendedor'], true);
+        $canSell = in_array($user->role, ['admin', 'vendedor', 'encargado'], true);
         $canManage = in_array($user->role, ['admin', 'encargado'], true);
         $totalAlerts = $alerts['low_stock'] + $alerts['out_of_stock'] + $alerts['expiring_soon'];
         $chartData = [

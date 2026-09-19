@@ -53,7 +53,16 @@ class RoleAccessTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('sales.create'))
-            ->assertForbidden();
+            ->assertOk();
+    }
+
+    public function test_managers_can_create_sales(): void
+    {
+        $user = User::factory()->manager()->create();
+
+        $this->actingAs($user)
+            ->get(route('sales.create'))
+            ->assertOk();
     }
 
     public function test_seller_cannot_access_inventory_or_reports(): void
@@ -168,7 +177,7 @@ class RoleAccessTest extends TestCase
     public function test_seller_dashboard_hides_inventory_value_and_by_seller_chart(): void
     {
         $user = User::factory()->seller()->create();
-        Sale::factory()->create(['total' => 100]);
+        Sale::factory()->create(['seller_id' => $user->id, 'total' => 100]);
 
         $this->actingAs($user)
             ->get(route('dashboard'))

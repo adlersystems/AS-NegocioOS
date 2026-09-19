@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\Setting;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,8 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        $canViewCosts = $request->user()->canViewCosts();
+        $user = $request->user();
+        $canViewCosts = $user->canViewCosts();
 
         $months = 6;
         $salesMonthly = [];
@@ -23,7 +25,9 @@ class DashboardController extends Controller
         for ($i = $months - 1; $i >= 0; $i--) {
             $month = now()->subMonths($i)->startOfMonth();
             $monthLabels[] = ucfirst($month->translatedFormat('M'));
-            $salesMonthly[] = Sale::whereBetween('created_at', [$month, $month->copy()->endOfMonth()])
+            $salesMonthly[] = Sale::query()
+                ->visibleTo($user)
+                ->whereBetween('created_at', [$month, $month->copy()->endOfMonth()])
                 ->count();
         }
 
@@ -33,12 +37,15 @@ class DashboardController extends Controller
         for ($i = $trendMonths - 1; $i >= 0; $i--) {
             $month = now()->subMonths($i)->startOfMonth();
             $trendLabels[] = $month->translatedFormat('M y');
-            $revenueTrend[] = (float) Sale::whereBetween('created_at', [$month, $month->copy()->endOfMonth()])
+            $revenueTrend[] = (float) Sale::query()
+                ->visibleTo($user)
+                ->whereBetween('created_at', [$month, $month->copy()->endOfMonth()])
                 ->sum('total');
         }
 
         $salesBySeller = $canViewCosts
             ? Sale::query()
+                ->visibleTo($user)
                 ->selectRaw('seller_id, SUM(total) as total')
                 ->with('seller:id,name')
                 ->groupBy('seller_id')
@@ -47,6 +54,7 @@ class DashboardController extends Controller
             : collect();
 
         $topProducts = SaleItem::query()
+            ->when($user->isSeller(), fn (Builder $q) => $q->whereHas('sale', fn (Builder $sq) => $sq->where('seller_id', $user->id)))
             ->selectRaw('product_id, SUM(quantity) as quantity, SUM(total) as revenue')
             ->with('product:id,name')
             ->groupBy('product_id')
@@ -55,12 +63,14 @@ class DashboardController extends Controller
             ->get();
 
         $recentSales = Sale::query()
+            ->visibleTo($user)
             ->with(['client:id,name', 'seller:id,name'])
             ->latest()
             ->limit(8)
             ->get();
 
         $topClient = Sale::query()
+            ->visibleTo($user)
             ->selectRaw('client_id, SUM(total) as total')
             ->whereNotNull('client_id')
             ->with('client:id,name')
@@ -78,13 +88,13 @@ class DashboardController extends Controller
             'counts' => [
                 'clients' => Client::count(),
                 'products' => Product::count(),
-                'sales' => Sale::count(),
-                'receivables' => (float) Sale::unpaid()->whereNotNull('client_id')->sum('total'),
+                'sales' => Sale::query()->visibleTo($user)->count(),
+                'receivables' => (float) Sale::query()->visibleTo($user)->unpaid()->whereNotNull('client_id')->sum('total'),
             ],
             'kpis' => [
-                'today_revenue' => (float) Sale::whereDate('created_at', today())->sum('total'),
-                'month_revenue' => (float) Sale::whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
-                'arpu' => (float) (Sale::avg('total') ?? 0),
+                'today_revenue' => (float) Sale::query()->visibleTo($user)->whereDate('created_at', today())->sum('total'),
+                'month_revenue' => (float) Sale::query()->visibleTo($user)->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('total'),
+                'arpu' => (float) (Sale::query()->visibleTo($user)->avg('total') ?? 0),
             ] + ($canViewCosts ? [
                 'inventory_value' => $inventoryValue,
             ] : []),

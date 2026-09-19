@@ -34,14 +34,14 @@ class SaleTest extends TestCase
         }
     }
 
-    public function test_managers_cannot_create_edit_or_delete_sales(): void
+    public function test_managers_can_create_but_not_edit_or_delete_sales(): void
     {
         $sale = Sale::factory()->create();
         $manager = User::factory()->manager()->create();
 
         $this->actingAs($manager)
             ->get(route('sales.create'))
-            ->assertForbidden();
+            ->assertOk();
 
         $this->actingAs($manager)
             ->get(route('sales.edit', $sale))
@@ -88,7 +88,7 @@ class SaleTest extends TestCase
             'total' => 112,
         ]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.index'))
             ->assertOk()
             ->assertSee('V-'.str_pad((string) $sale->id, 6, '0', STR_PAD_LEFT))
@@ -105,13 +105,13 @@ class SaleTest extends TestCase
         Sale::factory()->create(['client_id' => $target->id]);
         Sale::factory()->create(['client_id' => $other->id]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.index', ['search' => 'Objetivo']))
             ->assertOk()
             ->assertSee('Cliente Objetivo')
             ->assertDontSee('Otro Cliente');
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.index', ['search' => '8888-8']))
             ->assertOk()
             ->assertSee('Cliente Objetivo')
@@ -123,7 +123,7 @@ class SaleTest extends TestCase
         $client = Client::factory()->create(['name' => 'Cliente Por Código']);
         $target = Sale::factory()->create(['client_id' => $client->id]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.index', ['search' => $target->invoiceNumber()]))
             ->assertOk()
             ->assertSee('Cliente Por Código');
@@ -137,7 +137,7 @@ class SaleTest extends TestCase
         $saleA = Sale::factory()->create(['seller_id' => $sellerA->id]);
         $saleB = Sale::factory()->create(['seller_id' => $sellerB->id]);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.index', ['seller_id' => $sellerA->id]))
             ->assertOk()
             ->assertSee($saleA->invoiceNumber())
@@ -154,7 +154,7 @@ class SaleTest extends TestCase
         $from = now()->startOfWeek()->toDateString();
         $to = now()->toDateString();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.index', ['from' => $from, 'to' => $to]))
             ->assertOk()
             ->assertSee($saleIn->invoiceNumber())
@@ -461,7 +461,7 @@ class SaleTest extends TestCase
         ]);
         $sale->forceFill(['subtotal' => 100, 'tax_amount' => 12, 'total' => 112])->save();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.show', $sale))
             ->assertOk()
             ->assertSee($sale->invoiceNumber())
@@ -474,7 +474,7 @@ class SaleTest extends TestCase
     {
         $sale = Sale::factory()->create();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.invoice.pdf', $sale))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
@@ -487,7 +487,7 @@ class SaleTest extends TestCase
 
         Sale::factory()->count(10)->create();
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.export.pdf', ['search' => 'Cliente Reporte']))
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
@@ -495,7 +495,7 @@ class SaleTest extends TestCase
 
     public function test_export_excel_downloads_the_sales_registry(): void
     {
-        $this->actingAs(User::factory()->create())
+        $this->actingAs(User::factory()->admin()->create())
             ->get(route('sales.export.excel'))
             ->assertOk()
             ->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

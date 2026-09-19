@@ -85,7 +85,8 @@ class ApiAuthorizationTest extends TestCase
 
     public function test_seller_sale_show_hides_item_cost(): void
     {
-        $sale = Sale::factory()->create();
+        $seller = User::factory()->seller()->create();
+        $sale = Sale::factory()->create(['seller_id' => $seller->id]);
         SaleItem::factory()->create([
             'sale_id' => $sale->id,
             'cost' => 5,
@@ -93,7 +94,7 @@ class ApiAuthorizationTest extends TestCase
             'total' => 10,
         ]);
 
-        Sanctum::actingAs(User::factory()->seller()->create());
+        Sanctum::actingAs($seller);
 
         $this->getJson("/api/sales/{$sale->id}")
             ->assertOk()
@@ -121,10 +122,11 @@ class ApiAuthorizationTest extends TestCase
 
     public function test_seller_dashboard_hides_inventory_value_and_by_seller_chart(): void
     {
+        $seller = User::factory()->seller()->create();
         Product::factory()->create(['stock' => 3, 'production_cost' => 20]);
-        Sale::factory()->create(['total' => 100]);
+        Sale::factory()->create(['seller_id' => $seller->id, 'total' => 100]);
 
-        Sanctum::actingAs(User::factory()->seller()->create());
+        Sanctum::actingAs($seller);
 
         $this->getJson('/api/dashboard')
             ->assertOk()

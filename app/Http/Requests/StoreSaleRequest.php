@@ -20,7 +20,9 @@ class StoreSaleRequest extends FormRequest
     {
         return [
             'client_id' => ['nullable', 'integer', 'exists:clients,id'],
-            'seller_id' => ['required', 'integer', 'exists:users,id'],
+            'seller_id' => $this->user()?->canOverrideSeller()
+                ? ['required', 'integer', 'exists:users,id']
+                : ['nullable', 'integer'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
