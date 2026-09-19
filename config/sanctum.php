@@ -50,9 +50,16 @@ return [
     | considered expired. This will override any values set in the token's
     | "expires_at" attribute, but first-party sessions are not affected.
     |
+    | The value is expressed in minutes and defaults to 720 (12 hours).
+    | Expiration is enforced by Sanctum: a token is rejected once its
+    | created_at falls outside the configured window. Because validity is
+    | derived from created_at, previously issued tokens (including those with
+    | expires_at = NULL) become subject to this window as soon as the
+    | configuration ships - no backfill is required.
+    |
     */
 
-    'expiration' => null,
+    'expiration' => env('SANCTUM_EXPIRATION', 720),
 
     /*
     |--------------------------------------------------------------------------

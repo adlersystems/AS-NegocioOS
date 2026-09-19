@@ -33,7 +33,7 @@ class AuthController extends Controller
         $this->clearLoginThrottle($request);
 
         $user = auth()->user();
-        $token = $user->createToken('api')->plainTextToken;
+        $token = $user->createToken('api', ['api'])->plainTextToken;
 
         return response()->json([
             'token' => $token,
