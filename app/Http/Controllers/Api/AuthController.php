@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Concerns\ThrottlesLogins;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,18 +11,26 @@ use Laravel\Sanctum\TransientToken;
 
 class AuthController extends Controller
 {
+    use ThrottlesLogins;
+
     public function login(Request $request): JsonResponse
     {
+        $this->throttleLogin($request);
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
         if (! auth()->attempt($credentials)) {
+            $this->hitLoginThrottle($request);
+
             throw ValidationException::withMessages([
                 'email' => [__('auth.failed')],
             ]);
         }
+
+        $this->clearLoginThrottle($request);
 
         $user = auth()->user();
         $token = $user->createToken('api')->plainTextToken;

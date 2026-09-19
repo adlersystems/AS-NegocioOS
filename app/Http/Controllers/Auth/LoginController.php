@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Concerns\ThrottlesLogins;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,8 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
+    use ThrottlesLogins;
+
     public function showLoginForm(): View
     {
         return view('auth.login');
@@ -18,6 +21,8 @@ class LoginController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        $this->throttleLogin($request);
+
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
@@ -26,10 +31,14 @@ class LoginController extends Controller
         $remember = $request->boolean('remember');
 
         if (! Auth::attempt($credentials, $remember)) {
+            $this->hitLoginThrottle($request);
+
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
+
+        $this->clearLoginThrottle($request);
 
         $request->session()->regenerate();
 
