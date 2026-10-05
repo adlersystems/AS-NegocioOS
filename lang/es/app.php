@@ -120,6 +120,7 @@ return [
         'pending_balance' => 'Saldo pendiente',
         'history' => 'Historial de compras',
         'no_history' => 'Este cliente aún no tiene ventas registradas.',
+        'no_visible_history' => 'No tienes ventas registradas con este cliente.',
         'since' => 'Cliente desde',
         'language' => 'Idioma',
         'language_es' => 'Español',

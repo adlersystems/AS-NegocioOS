@@ -13,15 +13,22 @@ class ClientController extends Controller
 {
     use PaginatesToJson;
 
+    /**
+     * Hard ceiling for client list sizes and nested sale listings.
+     */
+    private const MAX_ITEMS = 100;
+
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         $clients = Client::query()
-            ->withCount('sales')
-            ->withSum('sales', 'total')
-            ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total')
+            ->withCount(['sales as sales_count' => fn (Builder $query) => $query->visibleTo($user)])
+            ->withSum(['sales as sales_total' => fn (Builder $query) => $query->visibleTo($user)], 'total')
+            ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()->visibleTo($user)], 'total')
             ->search($request->string('search')?->toString())
             ->latest('id')
-            ->paginate($request->integer('per_page', 10));
+            ->paginate(min($request->integer('per_page', 10), self::MAX_ITEMS));
 
         return response()->json([
             'data' => collect($clients->items())->map(fn (Client $client) => [
@@ -43,12 +50,15 @@ class ClientController extends Controller
 
     public function show(Request $request, Client $client): JsonResponse
     {
-        $client->loadSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total');
+        $user = $request->user();
+
+        $client->loadSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()->visibleTo($user)], 'total');
 
         $sales = $client->sales()
+            ->visibleTo($user)
             ->with(['seller:id,name'])
             ->latest()
-            ->limit($request->integer('limit', 20))
+            ->limit(min($request->integer('limit', 20), self::MAX_ITEMS))
             ->get();
 
         return response()->json([

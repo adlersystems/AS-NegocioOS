@@ -120,6 +120,7 @@ return [
         'pending_balance' => 'Pending balance',
         'history' => 'Purchase history',
         'no_history' => 'This client has no sales yet.',
+        'no_visible_history' => 'You have no sales recorded for this client.',
         'since' => 'Client since',
         'language' => 'Language',
         'language_es' => 'Español',

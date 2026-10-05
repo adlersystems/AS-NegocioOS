@@ -73,7 +73,11 @@
     {{-- Purchase history --}}
     <x-card :title="__('app.clients.history')" class="mt-4">
         @if ($sales->isEmpty())
-            <x-empty-state :title="__('app.clients.no_history')" icon="receipt" />
+            @if (auth()->user()?->isSeller())
+                <x-empty-state :title="__('app.clients.no_visible_history')" icon="receipt" />
+            @else
+                <x-empty-state :title="__('app.clients.no_history')" icon="receipt" />
+            @endif
         @else
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[640px] text-sm">

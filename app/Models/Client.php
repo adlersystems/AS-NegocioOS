@@ -31,10 +31,17 @@ class Client extends Model
     /**
      * The amount this client owes, computed as the sum of their unpaid sales.
      * Replaces the stored static value so receivables reflect real invoices.
+     *
+     * The fallback query reuses Sale::visibleTo() so a seller never falls back
+     * to the receivables of a colleague when no visible sale matched.
      */
     public function getPendingBalanceAttribute(): float
     {
-        return (float) ($this->unpaid_total ?? $this->sales()->unpaid()->sum('total'));
+        if ($this->unpaid_total !== null) {
+            return (float) $this->unpaid_total;
+        }
+
+        return (float) $this->sales()->unpaid()->visibleTo(auth()->user())->sum('total');
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

@@ -129,7 +129,7 @@ class ClientTest extends TestCase
 
     public function test_show_displays_purchase_history_and_pending_balance(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->manager()->create();
         $seller = User::factory()->seller()->create();
         $client = Client::factory()->create(['name' => 'Cliente Historial']);
 

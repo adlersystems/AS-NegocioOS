@@ -20,10 +20,12 @@ class ClientController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = auth()->user();
+
         $clients = Client::query()
-            ->withCount('sales')
-            ->withSum('sales', 'total')
-            ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total')
+            ->withCount(['sales as sales_count' => fn (Builder $query) => $query->visibleTo($user)])
+            ->withSum(['sales as sales_sum_total' => fn (Builder $query) => $query->visibleTo($user)], 'total')
+            ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()->visibleTo($user)], 'total')
             ->search($request->string('search')?->toString())
             ->latest('id')
             ->paginate(10)
@@ -48,9 +50,12 @@ class ClientController extends Controller
 
     public function show(Client $client): View
     {
-        $client->loadSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()], 'total');
+        $user = auth()->user();
+
+        $client->loadSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()->visibleTo($user)], 'total');
 
         $sales = $client->sales()
+            ->visibleTo($user)
             ->with('seller:id,name')
             ->latest()
             ->get();
