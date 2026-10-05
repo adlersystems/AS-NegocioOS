@@ -286,6 +286,7 @@ Approved plan executed in full as scoped.
 - **Rule A — Forced seller attribution.** On sale creation, `seller_id` is forced server-side to `auth()->id()` for `vendedor` and `encargado`, ignoring any client-supplied value; only `admin` (override-allowed) may select another seller via the explicit selector. Sale `update` remains admin-only and preserves override semantics. No historical `seller_id` values were modified or backfilled.
 - **Rule B — Vendedor sales visibility.** Web sales index/show/invoice-PDF/list-export/Excel-export, API sales index/show, and web+API dashboard sale-derived data (recent sales, top client, counts, KPIs, charts) are scoped to `seller_id = auth()->id()` when the operator is `vendedor`; `admin` and `encargado` retain global visibility.
 - Direct access to another seller's sale returns **404** (web and API), never 403.
+- **Scope note (added 2026-10-05, Step 8):** Rule B as implemented in this step covered the **sales** surfaces only. The client surfaces (`/clients`, `/clients/{client}`, `GET /api/clients`, `GET /api/clients/{client}`) were **not** seller-scoped by this step and remained globally visible to `vendedor` until Phase 1 Step 8 (`56fc5b3`) closed that gap. F-PII-01 was deferred at line 213 for a business decision; Step 8 resolved it: the client registry stays shared, and only sales-derived data on client surfaces is scoped.
 
 ### Files changed
 
