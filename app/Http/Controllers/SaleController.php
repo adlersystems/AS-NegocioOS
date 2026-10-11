@@ -122,9 +122,12 @@ class SaleController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($sale, $data) {
-            $sale->load('items');
+            $locked = Sale::whereKey($sale->getKey())->lockForUpdate()->firstOrFail();
 
-            $existing = $sale->items
+            $items = $locked->items()->get();
+            $locked->setRelation('items', $items);
+
+            $existing = $items
                 ->map(fn (SaleItem $item) => ['product_id' => (int) $item->product_id, 'quantity' => (int) $item->quantity])
                 ->values()
                 ->all();
@@ -135,17 +138,17 @@ class SaleController extends Controller
             );
 
             if ($existing !== $incoming) {
-                $this->reconcileItems($sale, $data['items']);
+                $this->reconcileItems($locked, $data['items']);
             }
 
             $clientId = $data['client_id'] ?? null;
-            $clientChanged = (int) $sale->client_id !== (int) $clientId;
+            $clientChanged = (int) $locked->client_id !== (int) $clientId;
 
-            $sale->update([
+            $locked->update([
                 'client_id' => $clientId,
                 'seller_id' => auth()->user()->canOverrideSeller()
                     ? $data['seller_id']
-                    : $sale->seller_id,
+                    : $locked->seller_id,
                 'notes' => $data['notes'] ?? null,
                 ...($clientChanged ? $this->clientSnapshot($clientId) : []),
             ]);
@@ -190,10 +193,29 @@ class SaleController extends Controller
         abort_unless(auth()->user()->canWriteSales(), 403);
 
         DB::transaction(function () use ($sale) {
-            $invoice = $sale->invoiceNumber();
+            $locked = Sale::whereKey($sale->getKey())->lockForUpdate()->firstOrFail();
 
-            foreach ($sale->items as $item) {
-                $item->product?->increment('stock', $item->quantity);
+            $invoice = $locked->invoiceNumber();
+
+            $items = $locked->items()->get();
+
+            $products = Product::withTrashed()
+                ->whereIn('id', $items->pluck('product_id')->unique()->values()->all())
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($items as $item) {
+                $product = $products->get($item->product_id);
+
+                if ($product === null) {
+                    throw ValidationException::withMessages([
+                        'sale' => __('app.sales.cancel_product_missing', ['product' => $item->product_id]),
+                    ]);
+                }
+
+                $product->increment('stock', $item->quantity);
 
                 InventoryMovement::create([
                     'product_id' => $item->product_id,
@@ -205,7 +227,7 @@ class SaleController extends Controller
                 ]);
             }
 
-            $sale->delete();
+            $locked->delete();
         });
 
         return redirect()
@@ -303,6 +325,7 @@ class SaleController extends Controller
                 ...$oldByProduct->keys()->all(),
                 ...array_keys($newByProduct),
             ]))
+            ->orderBy('id')
             ->lockForUpdate()
             ->get()
             ->keyBy('id');
@@ -424,6 +447,7 @@ class SaleController extends Controller
 
         $products = Product::withTrashed()
             ->whereIn('id', array_map('intval', array_column($rows, 'product_id')))
+            ->orderBy('id')
             ->lockForUpdate()
             ->get()
             ->keyBy('id');
@@ -448,6 +472,12 @@ class SaleController extends Controller
         foreach ($rows as $index => $row) {
             $product = $products[(int) $row['product_id']];
             $quantity = (int) $row['quantity'];
+
+            if ($product->trashed()) {
+                throw ValidationException::withMessages([
+                    "items.{$index}.product_id" => __('app.sales.product_archived', ['product' => $product->name]),
+                ]);
+            }
 
             if ($product->stock < $quantity) {
                 throw ValidationException::withMessages([

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Product;
+use App\Models\Sale;
 
 class UpdateSaleRequest extends StoreSaleRequest
 {
@@ -12,11 +13,22 @@ class UpdateSaleRequest extends StoreSaleRequest
      */
     protected function availableStock(Product $product): int
     {
+        return $product->stock + $this->previousQuantity($product);
+    }
+
+    /**
+     * Quantity of the product already recorded on the sale being edited.
+     */
+    protected function previousQuantity(Product $product): int
+    {
         $sale = $this->route('sale');
-        $previousQuantity = (int) $sale->items()
+
+        if (! $sale instanceof Sale) {
+            return 0;
+        }
+
+        return (int) $sale->items()
             ->where('product_id', $product->id)
             ->value('quantity');
-
-        return $product->stock + $previousQuantity;
     }
 }

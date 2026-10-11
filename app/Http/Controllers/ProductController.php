@@ -9,6 +9,7 @@ use App\Models\Product;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -53,9 +54,13 @@ class ProductController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
 
-        $product = Product::create($data);
+        $product = DB::transaction(function () use ($data) {
+            $product = Product::create($data);
 
-        $this->logInitialStock($product);
+            $this->logInitialStock($product);
+
+            return $product;
+        });
 
         return redirect()
             ->route('products.show', $product)
@@ -102,12 +107,15 @@ class ProductController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
 
-        $oldStock = (int) $product->stock;
-        $delta = (int) $data['stock'] - $oldStock;
+        DB::transaction(function () use ($data, $product) {
+            $locked = Product::whereKey($product->getKey())->lockForUpdate()->firstOrFail();
 
-        $product->update($data);
+            $delta = (int) $data['stock'] - (int) $locked->stock;
 
-        $this->logAdjustment($product, $delta);
+            $locked->update($data);
+
+            $this->logAdjustment($locked, $delta);
+        });
 
         return redirect()
             ->route('products.show', $product)

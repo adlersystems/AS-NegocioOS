@@ -38,6 +38,18 @@ class StoreSaleRequest extends FormRequest
         return $product->stock;
     }
 
+    /**
+     * Quantity of a product already recorded on the sale being validated.
+     *
+     * New sales have no prior lines, so this defaults to zero. Sale edits
+     * override it with the current saved quantity so an archived product line
+     * may be retained or reduced but never increased.
+     */
+    protected function previousQuantity(Product $product): int
+    {
+        return 0;
+    }
+
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
@@ -58,6 +70,7 @@ class StoreSaleRequest extends FormRequest
 
             foreach ($items as $index => $row) {
                 $product = $products[(int) $row['product_id']] ?? null;
+                $quantity = (int) $row['quantity'];
 
                 if (! $product || ! $product->is_active) {
                     $validator->errors()->add(
@@ -68,7 +81,16 @@ class StoreSaleRequest extends FormRequest
                     continue;
                 }
 
-                if ($this->availableStock($product) < (int) $row['quantity']) {
+                if ($product->trashed() && $quantity > $this->previousQuantity($product)) {
+                    $validator->errors()->add(
+                        "items.{$index}.product_id",
+                        __('app.sales.product_archived', ['product' => $product->name])
+                    );
+
+                    continue;
+                }
+
+                if ($this->availableStock($product) < $quantity) {
                     $validator->errors()->add(
                         "items.{$index}.quantity",
                         __('app.sales.insufficient_stock', ['product' => $product->name, 'stock' => $this->availableStock($product)])

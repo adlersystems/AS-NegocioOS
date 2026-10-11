@@ -783,4 +783,268 @@ class SaleTest extends TestCase
             'type' => InventoryMovement::TYPE_IN,
         ]);
     }
+
+    public function test_destroy_restores_stock_for_a_soft_deleted_product(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['name' => 'Producto Archivado', 'sale_price' => 15, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 4],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $invoice = $sale->invoiceNumber();
+
+        $this->assertSame(6, $product->fresh()->stock);
+
+        $product->delete();
+
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->delete(route('sales.destroy', $sale))
+            ->assertRedirect(route('sales.index'));
+
+        $this->assertDatabaseMissing('sales', ['id' => $sale->id]);
+        $this->assertDatabaseCount('sale_items', 0);
+        $this->assertSame(10, Product::withTrashed()->find($product->id)->stock);
+
+        $this->assertSame(1, InventoryMovement::query()
+            ->where('product_id', $product->id)
+            ->where('type', InventoryMovement::TYPE_IN)
+            ->where('quantity', 4)
+            ->where('reference', $invoice)
+            ->count());
+    }
+
+    public function test_destroy_rolls_back_when_an_archived_product_restoration_fails(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['name' => 'Producto Archivado', 'sale_price' => 15, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 4],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $product->delete();
+
+        InventoryMovement::creating(function () {
+            throw new \RuntimeException('inventory write failed');
+        });
+
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->delete(route('sales.destroy', $sale))
+            ->assertServerError();
+
+        $this->assertDatabaseHas('sales', ['id' => $sale->id]);
+        $this->assertDatabaseCount('sale_items', 1);
+        $this->assertSame(6, Product::withTrashed()->find($product->id)->stock);
+        $this->assertDatabaseMissing('inventory_movements', [
+            'reference' => $sale->invoiceNumber(),
+            'type' => InventoryMovement::TYPE_IN,
+        ]);
+    }
+
+    public function test_store_rejects_a_soft_deleted_product_even_when_active(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 20, 'is_active' => true]);
+        $product->delete();
+
+        $this->actingAs($seller)
+            ->post(route('sales.store'), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ])
+            ->assertSessionHasErrors('items.0.product_id');
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('inventory_movements', 0);
+        $this->assertSame(20, Product::withTrashed()->find($product->id)->stock);
+    }
+
+    public function test_update_allows_retaining_or_reducing_an_archived_line(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['name' => 'Archivado En Venta', 'sale_price' => 10, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 5],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $product->delete();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 5],
+            ],
+            'notes' => 'Retenido',
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $this->assertSame(5, (int) $sale->fresh()->items()->first()->quantity);
+        $this->assertSame(5, Product::withTrashed()->find($product->id)->stock);
+
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+            'notes' => 'Reducido',
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $this->assertSame(2, (int) $sale->fresh()->items()->first()->quantity);
+        $this->assertSame(8, Product::withTrashed()->find($product->id)->stock);
+    }
+
+    public function test_update_rejects_increasing_an_archived_line(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['name' => 'Archivado En Venta', 'sale_price' => 10, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $product->delete();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->put(route('sales.update', $sale), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 4],
+                ],
+            ])
+            ->assertSessionHasErrors('items.0.product_id');
+
+        $this->assertSame(7, Product::withTrashed()->find($product->id)->stock);
+        $this->assertSame(3, (int) $sale->fresh()->items()->first()->quantity);
+    }
+
+    public function test_update_rejects_adding_a_new_archived_line(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $kept = Product::factory()->create(['name' => 'Vendido', 'sale_price' => 10, 'stock' => 10]);
+        $archived = Product::factory()->create(['name' => 'Archivado Nuevo', 'sale_price' => 20, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $kept->id, 'quantity' => 2],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $archived->delete();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->put(route('sales.update', $sale), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $kept->id, 'quantity' => 2],
+                    ['product_id' => $archived->id, 'quantity' => 1],
+                ],
+            ])
+            ->assertSessionHasErrors('items.1.product_id');
+
+        $this->assertSame(8, $kept->fresh()->stock);
+        $this->assertSame(10, Product::withTrashed()->find($archived->id)->stock);
+        $this->assertDatabaseCount('sale_items', 1);
+        $this->assertDatabaseHas('sale_items', ['sale_id' => $sale->id, 'product_id' => $kept->id, 'quantity' => 2]);
+    }
+
+    public function test_update_rejects_inactive_products(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 10, 'is_active' => true]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $product->update(['is_active' => false]);
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->put(route('sales.update', $sale), [
+                'seller_id' => $seller->id,
+                'items' => [
+                    ['product_id' => $product->id, 'quantity' => 1],
+                ],
+            ])
+            ->assertSessionHasErrors('items.0.product_id');
+
+        $this->assertSame(8, $product->fresh()->stock);
+        $this->assertSame(2, (int) $sale->fresh()->items()->first()->quantity);
+    }
+
+    public function test_sequential_updates_reconcile_stock_from_committed_state(): void
+    {
+        $seller = User::factory()->seller()->create();
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 100]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 5],
+            ],
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $this->assertSame(95, $product->fresh()->stock);
+
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 8],
+            ],
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $this->assertSame(92, $product->fresh()->stock);
+        $this->assertSame(8, (int) $sale->fresh()->items()->first()->quantity);
+
+        $outTotal = (int) InventoryMovement::query()
+            ->where('product_id', $product->id)
+            ->where('type', InventoryMovement::TYPE_OUT)
+            ->where('reference', $sale->invoiceNumber())
+            ->sum('quantity');
+
+        $this->assertSame(8, $outTotal);
+    }
 }

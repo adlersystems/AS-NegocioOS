@@ -514,4 +514,56 @@ class ProductTest extends TestCase
         ])->assertForbidden();
         $this->actingAs($seller)->delete(route('products.destroy', $product))->assertForbidden();
     }
+
+    public function test_store_rolls_back_product_creation_when_initial_movement_fails(): void
+    {
+        $user = User::factory()->admin()->create();
+
+        InventoryMovement::creating(function () {
+            throw new \RuntimeException('inventory write failed');
+        });
+
+        $this->actingAs($user)
+            ->post(route('products.store'), [
+                'name' => 'No Debe Existir',
+                'stock' => 8,
+                'min_stock' => 2,
+                'production_cost' => 2,
+                'sale_price' => 5,
+            ])
+            ->assertServerError();
+
+        $this->assertDatabaseMissing('products', ['name' => 'No Debe Existir']);
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
+
+    public function test_update_rolls_back_stock_change_when_adjustment_movement_fails(): void
+    {
+        $user = User::factory()->admin()->create();
+        $product = Product::factory()->create([
+            'name' => 'Ajuste Fallido',
+            'sku' => 'AJU-9',
+            'stock' => 10,
+            'production_cost' => 2,
+            'sale_price' => 5,
+        ]);
+
+        InventoryMovement::creating(function () {
+            throw new \RuntimeException('inventory write failed');
+        });
+
+        $this->actingAs($user)
+            ->put(route('products.update', $product), [
+                'name' => 'Ajuste Fallido',
+                'sku' => 'AJU-9',
+                'stock' => 25,
+                'min_stock' => 5,
+                'production_cost' => 2,
+                'sale_price' => 5,
+            ])
+            ->assertServerError();
+
+        $this->assertSame(10, $product->fresh()->stock);
+        $this->assertDatabaseCount('inventory_movements', 0);
+    }
 }
