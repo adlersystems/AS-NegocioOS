@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -328,6 +329,37 @@ class MysqlConcurrencyTest extends TestCase
 
         $this->assertDatabaseCount('sales', 0);
         $this->assertSame(10, Product::withTrashed()->find($product->id)->stock);
+    }
+
+    public function test_fractional_iva_round_trips_on_mysql(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+        $seller = User::factory()->seller()->create();
+        $admin = User::factory()->admin()->create();
+        $product = Product::factory()->create(['sale_price' => 50, 'stock' => 10]);
+
+        $this->actingAs($seller)->post(route('sales.store'), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 2],
+            ],
+        ])->assertRedirect();
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame(12.5, (float) $sale->tax_rate);
+        $this->assertSame(12.50, (float) $sale->tax_amount);
+        $this->assertSame(112.50, (float) $sale->total);
+
+        $this->actingAs($admin)->put(route('sales.update', $sale), [
+            'seller_id' => $seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3],
+            ],
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $this->assertSame(12.5, (float) $sale->fresh()->tax_rate);
+        $this->assertSame(18.75, (float) $sale->fresh()->tax_amount);
+        $this->assertSame(168.75, (float) $sale->fresh()->total);
     }
 
     private function secondaryPdo(): PDO

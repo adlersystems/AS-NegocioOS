@@ -17,7 +17,7 @@ class SettingController extends Controller
             'currency' => [
                 'code' => $settings['currency'],
                 'symbol' => Setting::currencySymbol($settings['currency']),
-                'iva_percentage' => (int) $settings['iva_percentage'],
+                'iva_percentage' => (float) $settings['iva_percentage'],
             ],
         ]);
     }

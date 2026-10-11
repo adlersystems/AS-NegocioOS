@@ -155,4 +155,49 @@ class SettingTest extends TestCase
 
         $this->assertSame('Nuevo Nombre', Setting::get('company_name'));
     }
+
+    public function test_admin_can_set_a_fractional_iva_that_persists(): void
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->post(route('settings.update'), [
+                'company_name' => 'AS-NegocioOS',
+                'currency' => 'GTQ',
+                'iva_percentage' => '12.5',
+                'default_language' => 'es',
+            ])
+            ->assertRedirect(route('settings.index'));
+
+        $this->assertSame('12.5', Setting::get('iva_percentage'));
+    }
+
+    public function test_iva_precision_capped_to_two_decimals(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        foreach (['12', '12.5', '12.50', '0', '100.00'] as $rate) {
+            $this->actingAs($admin)
+                ->post(route('settings.update'), [
+                    'company_name' => 'AS-NegocioOS',
+                    'currency' => 'GTQ',
+                    'iva_percentage' => $rate,
+                    'default_language' => 'es',
+                ])
+                ->assertRedirect(route('settings.index'));
+
+            $this->assertSame($rate, Setting::get('iva_percentage'));
+        }
+
+        foreach (['12.5999', '100.01'] as $rate) {
+            $this->actingAs($admin)
+                ->post(route('settings.update'), [
+                    'company_name' => 'AS-NegocioOS',
+                    'currency' => 'GTQ',
+                    'iva_percentage' => $rate,
+                    'default_language' => 'es',
+                ])
+                ->assertSessionHasErrors('iva_percentage');
+        }
+
+        $this->assertSame('100.00', Setting::get('iva_percentage'));
+    }
 }

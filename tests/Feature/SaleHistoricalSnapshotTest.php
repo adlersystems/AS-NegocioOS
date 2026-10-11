@@ -700,4 +700,130 @@ class SaleHistoricalSnapshotTest extends TestCase
         $this->assertSame(22.40, (float) $sale->total);
         $this->assertSame(3.0, (float) $sale->items()->first()->cost);
     }
+
+    public function test_new_sale_with_fractional_iva_stores_rate_and_computes_tax(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+        $product = Product::factory()->create(['sale_price' => 50, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 2],
+        ]);
+
+        $sale->refresh();
+
+        $this->assertSame(100.0, (float) $sale->subtotal);
+        $this->assertSame(12.5, (float) $sale->tax_rate);
+        $this->assertSame(12.50, (float) $sale->tax_amount);
+        $this->assertSame(112.50, (float) $sale->total);
+
+        $this->assertDatabaseHas('sales', [
+            'id' => $sale->id,
+            'tax_rate' => 12.5,
+            'tax_amount' => 12.50,
+            'total' => 112.50,
+        ]);
+    }
+
+    public function test_editing_fractional_iva_sale_recomputes_at_the_stored_rate(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+        $product = Product::factory()->create(['sale_price' => 50, 'production_cost' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 2],
+        ]);
+        $this->assertSame(8, $product->fresh()->stock);
+
+        $this->actingAs($this->admin)->put(route('sales.update', $sale), [
+            'seller_id' => $this->seller->id,
+            'items' => [
+                ['product_id' => $product->id, 'quantity' => 3],
+            ],
+        ])->assertRedirect(route('sales.show', $sale));
+
+        $sale->refresh();
+
+        $this->assertSame(150.0, (float) $sale->subtotal);
+        $this->assertSame(12.5, (float) $sale->tax_rate);
+        $this->assertSame(18.75, (float) $sale->tax_amount);
+        $this->assertSame(168.75, (float) $sale->total);
+        $this->assertSame(7, $product->fresh()->stock);
+
+        $this->assertDatabaseHas('inventory_movements', [
+            'product_id' => $product->id,
+            'type' => InventoryMovement::TYPE_OUT,
+            'reference' => $sale->invoiceNumber(),
+            'quantity' => 1,
+        ]);
+    }
+
+    public function test_fractional_iva_global_change_does_not_rewrite_history(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+        $product = Product::factory()->create(['sale_price' => 50, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 2],
+        ]);
+
+        Setting::set('iva_percentage', '15');
+
+        $sale->refresh();
+
+        $this->assertSame(12.5, (float) $sale->tax_rate);
+        $this->assertSame(100.0, (float) $sale->subtotal);
+        $this->assertSame(12.50, (float) $sale->tax_amount);
+        $this->assertSame(112.50, (float) $sale->total);
+    }
+
+    public function test_fractional_iva_tax_rounds_to_two_decimals(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+        $product = Product::factory()->create(['sale_price' => 33.33, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ]);
+
+        $sale->refresh();
+
+        $this->assertSame(33.33, (float) $sale->subtotal);
+        $this->assertSame(4.17, (float) $sale->tax_amount);
+        $this->assertSame(37.50, (float) $sale->total);
+    }
+
+    public function test_create_form_preview_carries_fractional_iva(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+
+        $html = $this->actingAs($this->seller)
+            ->get(route('sales.create'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('\u0022iva\u0022:12.5', $html);
+        $this->assertStringContainsString('(12.5%)', $html);
+    }
+
+    public function test_invoice_pdf_label_uses_fractional_stored_rate(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+        $product = Product::factory()->create(['sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ]);
+
+        $sale->load(['client', 'seller', 'items.product']);
+
+        $html = view('sales.invoice-pdf', [
+            'sale' => $sale,
+            'iva' => (float) $sale->tax_rate,
+            'company' => ['name' => 'AS-NegocioOS', 'nit' => null, 'address' => null, 'phone' => null, 'email' => null],
+        ])->render();
+
+        $this->assertStringContainsString('(12.5%)', $html);
+        $this->assertStringNotContainsString('(12%)', $html);
+    }
 }

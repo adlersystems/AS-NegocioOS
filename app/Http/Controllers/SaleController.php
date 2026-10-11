@@ -59,7 +59,7 @@ class SaleController extends Controller
             'products' => $this->sellableProducts(),
             'clients' => Client::orderBy('name')->get(['id', 'name']),
             'sellers' => User::orderBy('name')->get(['id', 'name']),
-            'iva' => (int) Setting::get('iva_percentage', 12),
+            'iva' => (float) Setting::get('iva_percentage', 12),
         ]);
     }
 
@@ -111,7 +111,7 @@ class SaleController extends Controller
             'products' => $this->sellableProducts($sale->items->pluck('product_id')->all()),
             'clients' => Client::orderBy('name')->get(['id', 'name']),
             'sellers' => User::orderBy('name')->get(['id', 'name']),
-            'iva' => $sale->tax_rate !== null ? (float) $sale->tax_rate : (int) Setting::get('iva_percentage', 12),
+            'iva' => $sale->tax_rate !== null ? (float) $sale->tax_rate : (float) Setting::get('iva_percentage', 12),
         ]);
     }
 
@@ -245,7 +245,7 @@ class SaleController extends Controller
 
         $pdf = Pdf::loadView('sales.invoice-pdf', [
             'sale' => $sale,
-            'iva' => $sale->tax_rate !== null ? (float) $sale->tax_rate : (int) Setting::get('iva_percentage', 12),
+            'iva' => $sale->tax_rate !== null ? (float) $sale->tax_rate : (float) Setting::get('iva_percentage', 12),
             'company' => [
                 'name' => Setting::get('company_name', 'AS-NegocioOS'),
                 'nit' => Setting::get('nit'),
@@ -442,7 +442,7 @@ class SaleController extends Controller
      */
     private function applyItems(Sale $sale, array $rows): void
     {
-        $iva = (int) Setting::get('iva_percentage', 12);
+        $iva = (float) Setting::get('iva_percentage', 12);
         $subtotal = 0.0;
 
         $products = Product::withTrashed()

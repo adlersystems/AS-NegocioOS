@@ -197,4 +197,13 @@ class ApiEndpointsTest extends TestCase
             ->assertJsonPath('currency.symbol', '$')
             ->assertJsonPath('currency.iva_percentage', 15);
     }
+
+    public function test_settings_returns_fractional_iva(): void
+    {
+        Setting::set('iva_percentage', '12.5');
+
+        $this->getJson('/api/settings')
+            ->assertOk()
+            ->assertJsonPath('currency.iva_percentage', 12.5);
+    }
 }
