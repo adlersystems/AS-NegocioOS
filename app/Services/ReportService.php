@@ -77,7 +77,7 @@ class ReportService
             ->when($from, fn (Builder $query) => $query->whereDate('created_at', '>=', $from))
             ->when($to, fn (Builder $query) => $query->whereDate('created_at', '<=', $to))
             ->when($productId, fn (Builder $query) => $query->where('product_id', $productId))
-            ->with('product:id,name,sku,production_cost,stock')
+            ->with(['product' => fn ($query) => $query->withTrashed()->select('id', 'name', 'sku', 'production_cost', 'stock')])
             ->get();
 
         return $movements

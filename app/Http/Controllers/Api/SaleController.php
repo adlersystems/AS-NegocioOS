@@ -63,8 +63,8 @@ class SaleController extends Controller
                 'invoice_number' => $sale->invoiceNumber(),
                 'client' => [
                     'id' => $sale->client?->id,
-                    'name' => $sale->client?->name,
-                    'nit' => $sale->client?->nit,
+                    'name' => $sale->buyerName(),
+                    'nit' => $sale->buyerNit(),
                     'email' => $sale->client?->email,
                 ],
                 'client_name' => $sale->client_name,

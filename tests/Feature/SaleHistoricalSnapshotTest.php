@@ -334,6 +334,60 @@ class SaleHistoricalSnapshotTest extends TestCase
             ->assertJsonPath('data.items.0.quantity', 2);
     }
 
+    public function test_api_sale_show_uses_client_identity_snapshots(): void
+    {
+        $client = Client::factory()->create([
+            'name' => 'Nombre Original',
+            'nit' => '555-5',
+            'email' => 'original@example.com',
+        ]);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 10, 'stock' => 10]);
+
+        $sale = $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 1],
+        ], ['client_id' => $client->id]);
+
+        $client->update([
+            'name' => 'Renombrado Total',
+            'nit' => '666-6',
+            'email' => 'renombrado@example.com',
+        ]);
+
+        Sanctum::actingAs($this->admin);
+
+        $this->getJson(route('api.sales.show', $sale))
+            ->assertOk()
+            ->assertJsonPath('data.client.id', $client->id)
+            ->assertJsonPath('data.client.name', 'Nombre Original')
+            ->assertJsonPath('data.client.nit', '555-5')
+            ->assertJsonPath('data.client.email', 'renombrado@example.com')
+            ->assertJsonPath('data.client_name', 'Nombre Original')
+            ->assertJsonPath('data.client_nit', '555-5');
+    }
+
+    public function test_api_dashboard_top_client_name_reflects_current_client_identity(): void
+    {
+        $client = Client::factory()->create(['name' => 'Comprador Original', 'nit' => '777-7']);
+        $product = Product::factory()->create(['name' => 'Producto', 'sale_price' => 100, 'stock' => 10]);
+
+        $this->storeSale([
+            ['product_id' => $product->id, 'quantity' => 2],
+        ], ['client_id' => $client->id]);
+
+        $client->update(['name' => 'Comprador Renombrado', 'nit' => '888-8']);
+
+        Sanctum::actingAs($this->admin);
+
+        $this->getJson(route('api.dashboard'))
+            ->assertOk()
+            ->assertJsonPath('top_client.name', 'Comprador Renombrado');
+
+        $this->actingAs($this->admin)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Comprador Renombrado');
+    }
+
     public function test_soft_deleted_product_does_not_corrupt_historical_sale(): void
     {
         $product = Product::factory()->create(['name' => 'Producto Archivado', 'sale_price' => 10, 'production_cost' => 3, 'stock' => 10]);

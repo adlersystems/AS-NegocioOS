@@ -103,8 +103,8 @@ class DashboardController extends Controller
                 'out_of_stock' => Product::where('stock', '<=', 0)->count(),
                 'expiring_soon' => Product::expiringSoon()->count(),
             ],
-            'top_client' => $topClient?->client ? [
-                'name' => $topClient->client->name,
+            'top_client' => $topClient ? [
+                'name' => $topClient->buyerName() ?? __('app.labels.none'),
                 'total' => (float) $topClient->total,
             ] : null,
             'recent_sales' => $recentSales->map(fn (Sale $sale) => [

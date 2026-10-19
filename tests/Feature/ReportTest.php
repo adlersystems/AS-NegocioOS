@@ -117,6 +117,33 @@ class ReportTest extends TestCase
             ->assertSee('Q 50.00');
     }
 
+    public function test_inventory_report_includes_archived_products(): void
+    {
+        $user = User::factory()->create();
+        $product = Product::factory()->create([
+            'name' => 'Producto Archivado Reporte',
+            'sku' => 'ARC-1',
+            'production_cost' => 10,
+            'stock' => 7,
+        ]);
+
+        InventoryMovement::factory()->create([
+            'product_id' => $product->id,
+            'user_id' => $user->id,
+            'type' => InventoryMovement::TYPE_IN,
+            'quantity' => 12,
+        ]);
+
+        $product->delete();
+
+        $this->actingAs(User::factory()->manager()->create())
+            ->get(route('reports.index', ['type' => 'inventory']))
+            ->assertOk()
+            ->assertSee('Producto Archivado Reporte')
+            ->assertSee('Q 70.00')
+            ->assertDontSee(__('app.labels.none'));
+    }
+
     public function test_inventory_report_filters_by_product(): void
     {
         $user = User::factory()->create();
