@@ -10,13 +10,17 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\SettingController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('auth/login', [AuthController::class, 'login'])->name('api.auth.login');
+Route::post('auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:api-login')
+    ->name('api.auth.login');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('api.auth.logout');
     Route::get('me', [AuthController::class, 'me'])->name('api.me');
 
-    Route::get('dashboard', DashboardController::class)->name('api.dashboard');
+    Route::get('dashboard', DashboardController::class)
+        ->middleware('throttle:api-dashboard')
+        ->name('api.dashboard');
 
     Route::get('clients', [ClientController::class, 'index'])->name('api.clients.index');
     Route::get('clients/{client}', [ClientController::class, 'show'])->name('api.clients.show');
@@ -31,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->middleware('role:admin,encargado');
 
     Route::get('reports', [ReportController::class, 'index'])->name('api.reports.index')
-        ->middleware('role:admin,encargado');
+        ->middleware(['role:admin,encargado', 'throttle:api-reports']);
 
     Route::get('settings', [SettingController::class, 'index'])->name('api.settings.index')
         ->middleware('role:admin');
