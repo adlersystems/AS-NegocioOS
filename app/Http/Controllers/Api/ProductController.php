@@ -22,7 +22,7 @@ class ProductController extends Controller
             ->search($request->string('search')?->toString())
             ->when($request->boolean('active'), fn (Builder $query) => $query->active())
             ->latest('id')
-            ->paginate($request->integer('per_page', 10));
+            ->paginate($this->pageSize($request, 'per_page', 10));
 
         return response()->json([
             'data' => collect($products->items())->map(fn (Product $product) => [
@@ -53,7 +53,7 @@ class ProductController extends Controller
         $movements = $product->inventoryMovements()
             ->with('user:id,name')
             ->latest()
-            ->limit($request->integer('limit', 20))
+            ->limit($this->pageSize($request, 'limit', 20))
             ->get();
 
         return response()->json([

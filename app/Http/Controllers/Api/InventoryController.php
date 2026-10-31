@@ -26,7 +26,7 @@ class InventoryController extends Controller
             ->when($request->string('from')?->toString(), fn (Builder $query, string $from) => $query->whereDate('created_at', '>=', $from))
             ->when($request->string('to')?->toString(), fn (Builder $query, string $to) => $query->whereDate('created_at', '<=', $to))
             ->latest('id')
-            ->paginate($request->integer('per_page', 10));
+            ->paginate($this->pageSize($request, 'per_page', 10));
 
         return response()->json([
             'data' => collect($movements->items())->map(fn (InventoryMovement $movement) => [

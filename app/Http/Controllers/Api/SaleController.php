@@ -26,7 +26,7 @@ class SaleController extends Controller
             ->when($request->string('paid')?->toString() === 'paid', fn (Builder $query) => $query->paid())
             ->when($request->string('paid')?->toString() === 'pending', fn (Builder $query) => $query->unpaid())
             ->latest('id')
-            ->paginate($request->integer('per_page', 10));
+            ->paginate($this->pageSize($request, 'per_page', 10));
 
         return response()->json([
             'data' => collect($sales->items())->map(fn (Sale $sale) => [

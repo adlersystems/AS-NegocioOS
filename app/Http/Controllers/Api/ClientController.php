@@ -13,11 +13,6 @@ class ClientController extends Controller
 {
     use PaginatesToJson;
 
-    /**
-     * Hard ceiling for client list sizes and nested sale listings.
-     */
-    private const MAX_ITEMS = 100;
-
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -28,7 +23,7 @@ class ClientController extends Controller
             ->withSum(['sales as unpaid_total' => fn (Builder $query) => $query->unpaid()->visibleTo($user)], 'total')
             ->search($request->string('search')?->toString())
             ->latest('id')
-            ->paginate(min($request->integer('per_page', 10), self::MAX_ITEMS));
+            ->paginate($this->pageSize($request, 'per_page', 10));
 
         return response()->json([
             'data' => collect($clients->items())->map(fn (Client $client) => [
@@ -58,7 +53,7 @@ class ClientController extends Controller
             ->visibleTo($user)
             ->with(['seller:id,name'])
             ->latest()
-            ->limit(min($request->integer('limit', 20), self::MAX_ITEMS))
+            ->limit($this->pageSize($request, 'limit', 20))
             ->get();
 
         return response()->json([
