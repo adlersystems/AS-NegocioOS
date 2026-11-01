@@ -374,7 +374,7 @@ return [
         'tagline' => 'Eslogan',
         'tagline_desc' => 'Frase corta mostrada junto al nombre de la empresa.',
         'logo' => 'Logo',
-        'logo_desc' => 'Imagen PNG, JPG, SVG o WebP de hasta 2 MB.',
+        'logo_desc' => 'Imagen PNG, JPG o WebP de hasta 2 MB.',
         'logo_current' => 'Logo actual',
         'logo_upload' => 'Subir nuevo logo',
         'logo_remove' => 'No cambiar',

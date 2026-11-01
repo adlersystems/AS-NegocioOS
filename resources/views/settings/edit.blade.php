@@ -48,7 +48,7 @@
                                 type="file"
                                 id="logo"
                                 name="logo"
-                                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                                accept="image/png,image/jpeg,image/webp"
                                 @class([
                                     'block w-full text-sm text-on-surface file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-primary-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary',
                                     'border' => false,

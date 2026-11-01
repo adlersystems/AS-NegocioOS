@@ -79,19 +79,135 @@ class SettingTest extends TestCase
         Storage::fake('public');
 
         $this->actingAs(User::factory()->admin()->create())
-            ->post(route('settings.update'), [
-                'company_name' => 'AS-NegocioOS',
-                'currency' => 'GTQ',
-                'iva_percentage' => '12',
-                'default_language' => 'es',
+            ->post(route('settings.update'), $this->settingsPayload([
                 'logo' => UploadedFile::fake()->image('logo.png'),
-            ])
+            ]))
             ->assertRedirect(route('settings.index'));
 
         $path = Setting::logoPath();
         $this->assertNotNull($path);
         Storage::disk('public')->assertExists($path);
         $this->assertStringContainsString('storage/', Setting::logoUrl());
+    }
+
+    public function test_admin_can_upload_a_jpeg_logo(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->post(route('settings.update'), $this->settingsPayload([
+                'logo' => UploadedFile::fake()->image('logo.jpg'),
+            ]))
+            ->assertRedirect(route('settings.index'));
+
+        $path = Setting::logoPath();
+        $this->assertNotNull($path);
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_admin_can_upload_a_webp_logo(): void
+    {
+        Storage::fake('public');
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->post(route('settings.update'), $this->settingsPayload([
+                'logo' => UploadedFile::fake()->image('logo.webp'),
+            ]))
+            ->assertRedirect(route('settings.index'));
+
+        $path = Setting::logoPath();
+        $this->assertNotNull($path);
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_svg_logo_upload_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $file = $this->realUploadedFile('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+
+        try {
+            $this->assertSame('image/svg+xml', $file->getMimeType());
+
+            $this->actingAs(User::factory()->admin()->create())
+                ->post(route('settings.update'), $this->settingsPayload(['logo' => $file]))
+                ->assertSessionHasErrors('logo');
+
+            $this->assertNull(Setting::logoPath());
+            $this->assertCount(0, Storage::disk('public')->allFiles('logos'));
+        } finally {
+            $this->removeUploadedFile($file);
+        }
+    }
+
+    public function test_svg_logo_upload_with_script_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $file = $this->realUploadedFile(
+            'logo.svg',
+            '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script></svg>'
+        );
+
+        try {
+            $this->assertSame('image/svg+xml', $file->getMimeType());
+
+            $this->actingAs(User::factory()->admin()->create())
+                ->post(route('settings.update'), $this->settingsPayload(['logo' => $file]))
+                ->assertSessionHasErrors('logo');
+
+            $this->assertNull(Setting::logoPath());
+            $this->assertCount(0, Storage::disk('public')->allFiles('logos'));
+        } finally {
+            $this->removeUploadedFile($file);
+        }
+    }
+
+    public function test_svg_content_disguised_as_png_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $file = $this->realUploadedFile(
+            'logo.png',
+            '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+        );
+
+        try {
+            $this->assertSame('image/svg+xml', $file->getMimeType());
+            $this->assertSame('svg', $file->guessExtension());
+
+            $this->actingAs(User::factory()->admin()->create())
+                ->post(route('settings.update'), $this->settingsPayload(['logo' => $file]))
+                ->assertSessionHasErrors('logo');
+
+            $this->assertNull(Setting::logoPath());
+            $this->assertCount(0, Storage::disk('public')->allFiles('logos'));
+        } finally {
+            $this->removeUploadedFile($file);
+        }
+    }
+
+    public function test_rejected_logo_replacement_preserves_the_existing_logo(): void
+    {
+        Storage::fake('public');
+
+        $existingPath = 'logos/existing.png';
+        Storage::disk('public')->put($existingPath, 'existing-logo');
+        Setting::set('logo', $existingPath);
+
+        $file = $this->realUploadedFile('replacement.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
+
+        try {
+            $this->actingAs(User::factory()->admin()->create())
+                ->post(route('settings.update'), $this->settingsPayload(['logo' => $file]))
+                ->assertSessionHasErrors('logo');
+
+            $this->assertSame($existingPath, Setting::logoPath());
+            Storage::disk('public')->assertExists($existingPath);
+            $this->assertSame('existing-logo', Storage::disk('public')->get($existingPath));
+        } finally {
+            $this->removeUploadedFile($file);
+        }
     }
 
     public function test_iva_must_be_within_range(): void
@@ -199,5 +315,37 @@ class SettingTest extends TestCase
         }
 
         $this->assertSame('100.00', Setting::get('iva_percentage'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function settingsPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'company_name' => 'AS-NegocioOS',
+            'currency' => 'GTQ',
+            'iva_percentage' => '12',
+            'default_language' => 'es',
+        ], $overrides);
+    }
+
+    private function realUploadedFile(string $name, string $content): UploadedFile
+    {
+        $path = tempnam(sys_get_temp_dir(), 'logo-test-');
+
+        if ($path === false) {
+            throw new \RuntimeException('Unable to create a temporary logo file.');
+        }
+
+        file_put_contents($path, $content);
+
+        return new UploadedFile($path, $name, null, null, true);
+    }
+
+    private function removeUploadedFile(UploadedFile $file): void
+    {
+        @unlink($file->getPathname());
     }
 }

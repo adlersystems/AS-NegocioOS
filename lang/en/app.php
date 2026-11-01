@@ -374,7 +374,7 @@ return [
         'tagline' => 'Tagline',
         'tagline_desc' => 'Short phrase shown next to the company name.',
         'logo' => 'Logo',
-        'logo_desc' => 'PNG, JPG, SVG or WebP image up to 2 MB.',
+        'logo_desc' => 'PNG, JPG or WebP image up to 2 MB.',
         'logo_current' => 'Current logo',
         'logo_upload' => 'Upload new logo',
         'logo_remove' => 'Keep current',
